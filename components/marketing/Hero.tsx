@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { ArrowRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { KnowledgeOrbLoader } from "./KnowledgeOrbLoader";
 import styles from "./Hero.module.css";
 
 export function Hero() {
   return (
     <section className={styles.section}>
+      <div className={styles.orb} aria-hidden="true">
+        <KnowledgeOrbLoader />
+      </div>
+
       <div className={styles.copy}>
         <span className={styles.eyebrow}>
           <span className={styles.dot} />
