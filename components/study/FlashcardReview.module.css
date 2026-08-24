@@ -35,6 +35,28 @@
   color: var(--muted-foreground);
 }
 
+.flipScene {
+  width: 100%;
+  max-width: 32rem;
+  min-height: 14rem;
+  perspective: 1200px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: inherit;
+  display: block;
+}
+
+.flipCard {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 14rem;
+  transform-style: preserve-3d;
+}
+
 .card {
   width: 100%;
   max-width: 32rem;
@@ -51,6 +73,16 @@
   line-height: 1.6;
   color: var(--foreground);
   cursor: pointer;
+}
+
+.cardFace {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.cardBack {
+  transform: rotateY(180deg);
 }
 
 .side {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { SimpleMarkdown } from "@/components/study/SimpleMarkdown";
+import { Skeleton } from "@/components/ui/skeleton";
 import styles from "./page.module.css";
 
 export default async function SummaryPage({
@@ -37,7 +38,13 @@ export default async function SummaryPage({
 
           <div className={styles.card}>
             {artifact.status === "generating" && (
-              <p className={styles.pending}>Generating…</p>
+              <div style={{ display: "grid", gap: "0.6rem" }}>
+                <Skeleton style={{ height: "1.1rem", width: "60%" }} />
+                <Skeleton style={{ height: "0.85rem", width: "95%" }} />
+                <Skeleton style={{ height: "0.85rem", width: "88%" }} />
+                <Skeleton style={{ height: "0.85rem", width: "92%" }} />
+                <Skeleton style={{ height: "0.85rem", width: "70%" }} />
+              </div>
             )}
             {artifact.status === "error" && (
               <p className={styles.error}>{artifact.error_message}</p>

@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import type { Grade } from "@/lib/srs/sm2";
 import styles from "./FlashcardReview.module.css";
 
@@ -33,6 +36,7 @@ export function FlashcardReview({
   const [index, setIndex] = useState(0);
   const [showBack, setShowBack] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   const current = cards[index];
 
@@ -66,17 +70,41 @@ export function FlashcardReview({
         )}
       </div>
 
-      {status === "generating" && <p className={styles.pending}>Generating…</p>}
+      {status === "generating" && <Skeleton style={{ width: "100%", maxWidth: "32rem", height: "14rem", borderRadius: "1.5rem" }} />}
       {status === "error" && <p className={styles.error}>{errorMessage}</p>}
 
       {status === "ready" && current && (
         <>
-          <div className={styles.card} onClick={() => setShowBack((s) => !s)}>
-            <div>
-              <span className={styles.side}>{showBack ? "Answer" : "Question"}</span>
-              {showBack ? current.back : current.front}
-            </div>
-          </div>
+          <button
+            type="button"
+            className={styles.flipScene}
+            onClick={() => setShowBack((s) => !s)}
+            aria-label={showBack ? "Showing answer — tap to show question" : "Showing question — tap to show answer"}
+          >
+            <motion.div
+              key={current.id}
+              className={styles.flipCard}
+              animate={{ rotateY: showBack ? 180 : 0 }}
+              transition={
+                reducedMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 300, damping: 30 }
+              }
+            >
+              <div className={`${styles.card} ${styles.cardFace}`}>
+                <div>
+                  <span className={styles.side}>Question</span>
+                  {current.front}
+                </div>
+              </div>
+              <div className={`${styles.card} ${styles.cardFace} ${styles.cardBack}`}>
+                <div>
+                  <span className={styles.side}>Answer</span>
+                  {current.back}
+                </div>
+              </div>
+            </motion.div>
+          </button>
 
           {showBack ? (
             <div className={styles.grades}>

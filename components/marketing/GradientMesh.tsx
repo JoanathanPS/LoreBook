@@ -1,9 +1,10 @@
 import styles from "./GradientMesh.module.css";
 
 /**
- * Static ambient backdrop — three blurred mesh blobs + grain + vignette.
- * Purely decorative (aria-hidden). The slow 60s+ drift loop from §6 is a
- * Phase 8 addition; this is the static base it will animate on top of.
+ * Ambient backdrop — three blurred mesh blobs (each drifting on its own
+ * slow CSS loop, §6) + grain + vignette. Purely decorative (aria-hidden).
+ * Plain CSS rather than GSAP since it's a simple infinite loop needed on
+ * every page, not just the scroll-driven landing sequence.
  */
 export function GradientMesh() {
   return (

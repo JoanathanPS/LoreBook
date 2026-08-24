@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { QuizQuestion } from "@/lib/ai/generate";
 import styles from "./QuizRunner.module.css";
 
@@ -64,7 +65,13 @@ export function QuizRunner({
         )}
       </div>
 
-      {status === "generating" && <p className={styles.pending}>Generating…</p>}
+      {status === "generating" && (
+        <div className={styles.questions}>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} style={{ height: "8rem", borderRadius: "1.25rem" }} />
+          ))}
+        </div>
+      )}
       {status === "error" && <p className={styles.error}>{errorMessage}</p>}
 
       {status === "ready" && (

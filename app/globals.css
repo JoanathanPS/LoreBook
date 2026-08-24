@@ -165,6 +165,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /*
+   * Explicit focus-visible ring for every interactive element, including
+   * bespoke CSS-Module cards/links that don't go through shadcn's own
+   * focus-visible:ring utilities — WCAG 2.4.7.
+   */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:not([tabindex="-1"]):focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -177,4 +190,60 @@
 .grain {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   opacity: 0.035;
+}
+
+/*
+ * Shared hover-lift micro-interaction (§6) for clickable card-style
+ * elements — a plain global class (not a CSS Module) so it can be applied
+ * from any component without duplicating the rule per module.
+ */
+.hover-lift {
+  transition:
+    transform var(--duration-base) var(--ease-out-expo),
+    box-shadow var(--duration-base) var(--ease-out-expo),
+    border-color var(--duration-base) var(--ease-out-expo);
+}
+
+@media (hover: hover) {
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-glass);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hover-lift {
+    transition: none;
+  }
+  .hover-lift:hover {
+    transform: none;
+  }
+}
+
+/* Skeleton shimmer (§6) — a moving highlight sweep, not a flat pulse. */
+@keyframes shimmer-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in oklab, var(--muted) 40%, var(--foreground) 12%) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+    background: var(--muted);
+  }
 }

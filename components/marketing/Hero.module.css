@@ -60,6 +60,11 @@
   gap: 1rem;
 }
 
+.magneticWrap {
+  display: inline-block;
+  will-change: transform;
+}
+
 /* ---- hero visual: static RAG-chat mockup panel ---- */
 .panel {
   position: relative;

@@ -4,15 +4,8 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { ConceptGraph } from "./ConceptGraph";
 import type { ArtifactRef, GraphEdge, GraphNode } from "./types";
+import { artifactHref } from "@/lib/study/artifact-links";
 import styles from "./ConceptGraphView.module.css";
-
-const ARTIFACT_HREF: Record<string, string> = {
-  summary: "/study/summary",
-  formula_sheet: "/study/summary",
-  flashcard_deck: "/study/flashcards",
-  quiz: "/study/quiz",
-  reel: "/reels",
-};
 
 export function ConceptGraphView({
   courseName,
@@ -87,8 +80,8 @@ export function ConceptGraphView({
                 {selectedArtifacts.map((a) => (
                   <Link
                     key={a.id}
-                    href={`${ARTIFACT_HREF[a.kind] ?? "/study/summary"}/${a.id}`}
-                    className={styles.artifactLink}
+                    href={artifactHref(a.kind, a.id)}
+                    className={`${styles.artifactLink} hover-lift`}
                   >
                     <span>{a.title}</span>
                     <span className={styles.artifactKind}>{a.kind}</span>

@@ -12,28 +12,30 @@ export function Hero() {
           Built for engineering coursework
         </span>
 
-        <h1 className={styles.headline}>
+        <h1 className={styles.headline} data-anim="headline">
           Turn your course material into a{" "}
           <span className={styles.accentText}>study workspace</span> that
           talks back.
         </h1>
 
-        <p className={styles.subhead}>
+        <p className={styles.subhead} data-anim="fade-up">
           Upload PDFs, lecture recordings, and photographed notes. LoreBook
           reads the diagrams, cites the exact page or timestamp, and turns
           any topic into flashcards, quizzes, and a concept map you can
           actually track mastery against.
         </p>
 
-        <div className={styles.ctaRow}>
-          <Button
-            render={<Link href="/login?mode=signup" />}
-            nativeButton={false}
-            size="lg"
-          >
-            Get started
-            <ArrowRight />
-          </Button>
+        <div className={styles.ctaRow} data-anim="fade-up">
+          <span data-magnetic className={styles.magneticWrap}>
+            <Button
+              render={<Link href="/login?mode=signup" />}
+              nativeButton={false}
+              size="lg"
+            >
+              Get started
+              <ArrowRight />
+            </Button>
+          </span>
           <Button
             render={<a href="#modules" />}
             nativeButton={false}
@@ -45,7 +47,7 @@ export function Hero() {
         </div>
       </div>
 
-      <div className={styles.panel}>
+      <div className={styles.panel} data-anim="fade-up">
         <div className={styles.panelChrome}>
           <span className={styles.chromeDot} />
           <span className={styles.chromeDot} />

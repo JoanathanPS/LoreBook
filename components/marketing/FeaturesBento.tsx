@@ -74,7 +74,11 @@ export function FeaturesBento() {
                 ? styles.tall
                 : "";
           return (
-            <article key={m.title} className={`${styles.card} ${spanClass}`}>
+            <article
+              key={m.title}
+              className={`${styles.card} ${spanClass} hover-lift`}
+              data-reveal
+            >
               <span className={styles.icon}>
                 <Icon size={18} strokeWidth={2} />
               </span>

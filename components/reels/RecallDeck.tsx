@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
+import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import type { RecallQuestion } from "@/lib/ai/generate";
 import styles from "./RecallDeck.module.css";
 
@@ -16,6 +17,7 @@ export function RecallDeck({
   const [index, setIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [finished, setFinished] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   const current = questions[index];
 
@@ -68,11 +70,15 @@ export function RecallDeck({
           <motion.div
             key={index}
             className={styles.card}
-            initial={{ scale: 0.92, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            drag="x"
+            initial={reducedMotion ? { opacity: 0 } : { scale: 0.92, opacity: 0 }}
+            animate={reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+            exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }}
+            transition={
+              reducedMotion
+                ? { duration: 0.15 }
+                : { type: "spring", stiffness: 300, damping: 30 }
+            }
+            drag={reducedMotion ? false : "x"}
             dragElastic={0.3}
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
@@ -83,8 +89,12 @@ export function RecallDeck({
       </div>
 
       <div className={styles.legend}>
-        <span className={styles.legendFalse}>← swipe: false</span>
-        <span className={styles.legendTrue}>swipe: true →</span>
+        <button type="button" className={styles.legendFalse} onClick={() => answer(false)}>
+          ← false
+        </button>
+        <button type="button" className={styles.legendTrue} onClick={() => answer(true)}>
+          true →
+        </button>
       </div>
     </div>
   );

@@ -1,0 +1,28 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  min-height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color var(--duration-base) var(--ease-out-expo);
+}
+
+.trigger:hover {
+  border-color: color-mix(in oklab, var(--primary) 40%, var(--glass-border));
+  color: var(--foreground);
+}
+
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 0.05rem 0.35rem;
+}

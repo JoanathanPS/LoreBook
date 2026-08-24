@@ -5,6 +5,8 @@ import Link from "next/link";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
 import { RecallDeck } from "./RecallDeck";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import type { RecallQuestion } from "@/lib/ai/generate";
 import styles from "./ReelPlayer.module.css";
 
@@ -34,6 +36,7 @@ export function ReelPlayer({
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(false);
   const [phase, setPhase] = useState<"cards" | "recall">("cards");
+  const reducedMotion = useReducedMotion();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const current = cards[index];
@@ -87,22 +90,32 @@ export function ReelPlayer({
   }
 
   const variants = useMemo(
-    () => ({
-      enter: (dir: number) => ({ y: dir > 0 ? 60 : -60, opacity: 0, scale: 0.96 }),
-      center: { y: 0, opacity: 1, scale: 1, filter: "blur(0px)" },
-      exit: (dir: number) => ({
-        y: dir > 0 ? -60 : 60,
-        opacity: 0,
-        scale: 0.94,
-        filter: "blur(4px)",
-      }),
-    }),
-    [],
+    () =>
+      reducedMotion
+        ? {
+            enter: { opacity: 0 },
+            center: { opacity: 1 },
+            exit: { opacity: 0 },
+          }
+        : {
+            enter: (dir: number) => ({ y: dir > 0 ? 60 : -60, opacity: 0, scale: 0.96 }),
+            center: { y: 0, opacity: 1, scale: 1, filter: "blur(0px)" },
+            exit: (dir: number) => ({
+              y: dir > 0 ? -60 : 60,
+              opacity: 0,
+              scale: 0.94,
+              filter: "blur(4px)",
+            }),
+          },
+    [reducedMotion],
   );
 
   if (status === "generating") {
     return (
       <div className={styles.stage}>
+        <div className={styles.cardLayer}>
+          <Skeleton style={{ width: "100%", maxWidth: "26rem", height: "18rem", borderRadius: "1.5rem" }} />
+        </div>
         <p className={styles.hint}>Generating your reel…</p>
       </div>
     );
@@ -169,7 +182,11 @@ export function ReelPlayer({
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            transition={
+              reducedMotion
+                ? { duration: 0.15 }
+                : { type: "spring", stiffness: 300, damping: 30 }
+            }
             drag="y"
             dragElastic={0.2}
             dragConstraints={{ top: 0, bottom: 0 }}

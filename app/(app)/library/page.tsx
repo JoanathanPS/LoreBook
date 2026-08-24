@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { UploadDropzone } from "@/components/library/UploadDropzone";
 import { DocumentStatusBadge } from "@/components/library/DocumentStatusBadge";
 import { ArtifactGenerator } from "@/components/library/ArtifactGenerator";
+import { CommandPaletteTrigger } from "@/components/command/CommandPaletteTrigger";
+import { artifactHref } from "@/lib/study/artifact-links";
 import styles from "./page.module.css";
 
 interface DocumentRow {
@@ -34,14 +36,6 @@ interface CourseRow {
   documents: DocumentRow[];
   study_artifacts: ArtifactRow[];
 }
-
-const ARTIFACT_HREF: Record<string, string> = {
-  summary: "/study/summary",
-  formula_sheet: "/study/summary",
-  flashcard_deck: "/study/flashcards",
-  quiz: "/study/quiz",
-  reel: "/reels",
-};
 
 export default async function LibraryPage() {
   const supabase = await createClient();
@@ -68,7 +62,8 @@ export default async function LibraryPage() {
               <BookOpenText size={16} style={{ display: "inline", marginRight: 6 }} />
               LoreBook
             </Link>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <CommandPaletteTrigger />
               <Button render={<Link href="/dashboard" />} nativeButton={false} variant="ghost" size="sm">
                 <LayoutDashboard size={14} />
                 Dashboard
@@ -157,8 +152,8 @@ export default async function LibraryPage() {
                         {course.study_artifacts.map((artifact) => (
                           <Link
                             key={artifact.id}
-                            href={`${ARTIFACT_HREF[artifact.kind] ?? "/study/summary"}/${artifact.id}`}
-                            className={styles.docRow}
+                            href={artifactHref(artifact.kind, artifact.id)}
+                            className={`${styles.docRow} hover-lift`}
                           >
                             <span className={styles.docTitle}>{artifact.title}</span>
                             <DocumentStatusBadge status={artifact.status} />

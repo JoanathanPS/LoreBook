@@ -25,7 +25,7 @@ export function HowItWorks() {
 
       <div className={styles.steps}>
         {STEPS.map((step, i) => (
-          <div key={step.title} className={styles.step}>
+          <div key={step.title} className={styles.step} data-reveal>
             <span className={styles.index}>0{i + 1}</span>
             <h3 className={styles.stepTitle}>{step.title}</h3>
             <p className={styles.stepDesc}>{step.desc}</p>

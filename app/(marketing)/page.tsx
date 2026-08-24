@@ -4,6 +4,7 @@ import { Hero } from "@/components/marketing/Hero";
 import { FeaturesBento } from "@/components/marketing/FeaturesBento";
 import { HowItWorks } from "@/components/marketing/HowItWorks";
 import { Footer } from "@/components/marketing/Footer";
+import { LandingMotion } from "@/components/marketing/LandingMotion";
 
 export default function LandingPage() {
   return (
@@ -16,6 +17,7 @@ export default function LandingPage() {
         <HowItWorks />
       </main>
       <Footer />
+      <LandingMotion />
     </>
   );
 }
