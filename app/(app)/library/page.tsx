@@ -40,6 +40,7 @@ const ARTIFACT_HREF: Record<string, string> = {
   formula_sheet: "/study/summary",
   flashcard_deck: "/study/flashcards",
   quiz: "/study/quiz",
+  reel: "/reels",
 };
 
 export default async function LibraryPage() {

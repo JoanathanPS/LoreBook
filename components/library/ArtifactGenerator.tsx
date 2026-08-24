@@ -11,6 +11,7 @@ const KINDS = [
   { kind: "flashcard_deck", label: "Flashcards" },
   { kind: "quiz", label: "Quiz" },
   { kind: "formula_sheet", label: "Formula sheet" },
+  { kind: "reel", label: "Reel" },
 ] as const;
 
 export function ArtifactGenerator({
@@ -28,7 +29,8 @@ export function ArtifactGenerator({
     setPending(kind);
     setError(null);
     try {
-      const res = await fetch("/api/artifacts", {
+      const endpoint = kind === "reel" ? "/api/reels" : "/api/artifacts";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseId, courseName, kind }),

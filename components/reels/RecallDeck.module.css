@@ -1,0 +1,96 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  background: #060608;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  touch-action: none;
+}
+
+.progress {
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.cardLayer {
+  position: relative;
+  width: 100%;
+  max-width: 24rem;
+  height: 20rem;
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-2xl);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  text-align: center;
+  cursor: grab;
+}
+
+.statement {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.legend {
+  position: absolute;
+  bottom: 2rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.5rem;
+  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+}
+
+.legendFalse {
+  color: var(--chart-5);
+}
+
+.legendTrue {
+  color: var(--chart-2);
+}
+
+.done {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+  text-align: center;
+  color: #fff;
+}
+
+.score {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.doneSub {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.backLink {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}

@@ -1,0 +1,150 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  background: #060608;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 0.75rem 1rem 0.5rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.progressRow {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.segment {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.segmentFill {
+  height: 100%;
+  background: #fff;
+  width: 0%;
+  transform-origin: left;
+}
+
+.segmentFill[data-state="done"] {
+  width: 100%;
+}
+
+.segmentFill[data-state="active"] {
+  animation: fill var(--duration) linear forwards;
+}
+
+.segmentFill[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+@keyframes fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backLink {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.8125rem;
+}
+
+.muteButton {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-4xl);
+  padding: 0.35rem;
+  display: inline-flex;
+}
+
+.tapZone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 33%;
+  z-index: 10;
+}
+
+.tapZoneLeft {
+  left: 0;
+}
+
+.tapZoneRight {
+  right: 0;
+}
+
+.cardLayer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 5rem 1.5rem 6rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 26rem;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--mesh-purple) 55%, #0a0a0f),
+    color-mix(in oklab, var(--mesh-green) 45%, #0a0a0f)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2.5rem 2rem;
+  display: grid;
+  gap: 1.25rem;
+  cursor: grab;
+}
+
+.visualHint {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--primary) 80%, white);
+}
+
+.hook {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.hint {
+  position: absolute;
+  bottom: 2rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}

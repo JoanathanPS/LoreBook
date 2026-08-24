@@ -7,6 +7,7 @@ const PROTECTED_PREFIXES = [
   "/document",
   "/chat",
   "/study",
+  "/reels",
   "/settings",
 ];
 
