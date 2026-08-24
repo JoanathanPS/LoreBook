@@ -1,0 +1,120 @@
+.wrap {
+  min-height: 100dvh;
+}
+
+.header {
+  border-bottom: 1px solid var(--glass-border);
+  background: color-mix(in oklab, var(--background) 70%, transparent);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.headerInner {
+  margin-inline: auto;
+  max-width: var(--container-max);
+  padding-inline: var(--container-pad-x);
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.main {
+  margin-inline: auto;
+  max-width: var(--container-max);
+  padding-inline: var(--container-pad-x);
+  padding-block: 2.5rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.createForm {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 24rem;
+}
+
+.empty {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  padding: 2rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.courses {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.courseCard {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  padding: 1.5rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.courseHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.courseName {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.docList {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.docRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--secondary);
+  font-size: 0.8125rem;
+}
+
+.docTitle {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground);
+}
+
+.docType {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+.docMeta {
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+.docError {
+  font-size: 0.6875rem;
+  color: var(--chart-5);
+}

@@ -1,0 +1,83 @@
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  padding: 1.75rem 1rem;
+  border-radius: var(--radius-xl);
+  border: 1px dashed var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color var(--duration-base) var(--ease-out-expo);
+}
+
+.dropzone:hover,
+.dropzone[data-active="true"] {
+  border-color: color-mix(in oklab, var(--primary) 50%, var(--glass-border));
+  color: var(--foreground);
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.uploadList {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.uploadItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: var(--secondary);
+}
+
+.spinner {
+  color: var(--primary);
+  animation: spin 1s linear infinite;
+}
+
+.uploadName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground);
+}
+
+.uploadStatus {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+.uploadStatus[data-status="done"] {
+  color: var(--chart-2);
+}
+
+.uploadStatus[data-status="error"] {
+  color: var(--chart-5);
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

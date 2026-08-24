@@ -12,11 +12,13 @@ export async function signIn(
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
 
+  const redirectTo = String(formData.get("redirectTo") ?? "/library");
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) return { error: error.message };
-  redirect("/dashboard");
+  redirect(redirectTo);
 }
 
 export async function signUp(

@@ -15,9 +15,11 @@ const initialState: AuthState = { error: null };
 export function AuthCard({
   defaultMode,
   confirmEmail,
+  redirectTo,
 }: {
   defaultMode: "signin" | "signup";
   confirmEmail: boolean;
+  redirectTo: string;
 }) {
   const [signInState, signInAction, signInPending] = useActionState(
     signIn,
@@ -61,6 +63,7 @@ export function AuthCard({
 
           <TabsContent value="signin">
             <form action={signInAction} className={styles.form}>
+              <input type="hidden" name="redirectTo" value={redirectTo} />
               <div className={styles.field}>
                 <Label htmlFor="signin-email">Email</Label>
                 <Input

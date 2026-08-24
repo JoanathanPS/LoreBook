@@ -26,11 +26,20 @@ export function Hero() {
         </p>
 
         <div className={styles.ctaRow}>
-          <Button render={<Link href="/login?mode=signup" />} size="lg">
+          <Button
+            render={<Link href="/login?mode=signup" />}
+            nativeButton={false}
+            size="lg"
+          >
             Get started
             <ArrowRight />
           </Button>
-          <Button render={<a href="#modules" />} variant="outline" size="lg">
+          <Button
+            render={<a href="#modules" />}
+            nativeButton={false}
+            variant="outline"
+            size="lg"
+          >
             See how it works
           </Button>
         </div>

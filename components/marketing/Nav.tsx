@@ -28,10 +28,19 @@ export function Nav() {
         </nav>
 
         <div className={styles.actions}>
-          <Button render={<Link href="/login" />} variant="ghost" size="sm">
+          <Button
+            render={<Link href="/login" />}
+            nativeButton={false}
+            variant="ghost"
+            size="sm"
+          >
             Sign in
           </Button>
-          <Button render={<Link href="/login?mode=signup" />} size="sm">
+          <Button
+            render={<Link href="/login?mode=signup" />}
+            nativeButton={false}
+            size="sm"
+          >
             Get started
           </Button>
         </div>

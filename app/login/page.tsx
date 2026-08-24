@@ -4,7 +4,11 @@ import { AuthCard } from "@/components/auth/AuthCard";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string; confirmEmail?: string }>;
+  searchParams: Promise<{
+    mode?: string;
+    confirmEmail?: string;
+    redirectTo?: string;
+  }>;
 }) {
   const params = await searchParams;
   const defaultMode = params.mode === "signup" ? "signup" : "signin";
@@ -15,6 +19,7 @@ export default async function LoginPage({
       <AuthCard
         defaultMode={defaultMode}
         confirmEmail={params.confirmEmail === "1"}
+        redirectTo={params.redirectTo ?? "/library"}
       />
     </>
   );
