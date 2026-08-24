@@ -84,6 +84,21 @@
 .courseName {
   font-weight: 600;
   color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sharedBadge {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary);
+  border: 1px solid color-mix(in oklab, var(--primary) 35%, transparent);
+  border-radius: var(--radius-4xl);
+  padding: 0.1rem 0.45rem;
 }
 
 .docList {

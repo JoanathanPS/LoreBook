@@ -16,6 +16,7 @@ export function UploadDropzone({ courseId }: { courseId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<UploadItem[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [isExamPaper, setIsExamPaper] = useState(false);
 
   async function uploadOne(file: File) {
     setItems((prev) => [...prev, { name: file.name, status: "uploading" }]);
@@ -28,6 +29,7 @@ export function UploadDropzone({ courseId }: { courseId: string }) {
       const form = new FormData();
       form.append("file", file);
       form.append("course_id", courseId);
+      if (isExamPaper) form.append("is_exam_paper", "true");
 
       const uploadRes = await fetch("/api/documents", { method: "POST", body: form });
       const uploadJson = await uploadRes.json();
@@ -60,6 +62,14 @@ export function UploadDropzone({ courseId }: { courseId: string }) {
 
   return (
     <div>
+      <label className={styles.examCheckbox}>
+        <input
+          type="checkbox"
+          checked={isExamPaper}
+          onChange={(e) => setIsExamPaper(e.target.checked)}
+        />
+        Mark as past exam paper (feeds the Exam Predictor)
+      </label>
       <div
         className={styles.dropzone}
         data-active={dragOver}

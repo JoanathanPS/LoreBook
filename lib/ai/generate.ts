@@ -49,7 +49,12 @@ const flashcardsSchema = z.object({
 export async function generateFlashcards(
   context: string,
   count = 12,
+  focusConcepts?: string[],
 ): Promise<Array<{ front: string; back: string }>> {
+  const focusInstruction = focusConcepts?.length
+    ? `\n\nPRIORITIZE these specific concepts — they're the ones most likely to be tested and least understood so far, so most/all cards should target them directly: ${focusConcepts.join(", ")}.`
+    : "";
+
   const { object } = await generateObject({
     model: MODEL,
     schema: flashcardsSchema,
@@ -61,7 +66,7 @@ export async function generateFlashcards(
 - Bad example: front "Explain how gradient descent works", back "Gradient descent is an optimization algorithm that..." (too broad, answer too long)
 - Good example: front "What does gradient descent minimize?", back "The loss/cost function"
 - Vary the question style: definitions, "what is the formula for X", "what does symbol Y represent", cause→effect, comparisons ("X vs Y: which is faster?").
-- Spread cards across all topics in the material, not just the first section.`,
+- Spread cards across all topics in the material, not just the first section.${focusInstruction}`,
     prompt: context,
   });
 

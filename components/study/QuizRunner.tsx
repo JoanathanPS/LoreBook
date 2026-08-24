@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { QuizQuestion } from "@/lib/ai/generate";
@@ -16,24 +18,43 @@ interface AttemptResult {
 
 export function QuizRunner({
   quizId,
+  courseId,
   title,
   status,
   errorMessage,
   questions,
 }: {
   quizId: string;
+  courseId: string;
   title: string;
   status: string;
   errorMessage: string | null;
   questions: QuizQuestion[];
 }) {
+  const router = useRouter();
   const [answers, setAnswers] = useState<(number | null)[]>(
     () => new Array(questions.length).fill(null),
   );
   const [result, setResult] = useState<AttemptResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [startingBattle, setStartingBattle] = useState(false);
 
   const allAnswered = answers.every((a) => a !== null);
+
+  async function startBattle() {
+    setStartingBattle(true);
+    try {
+      const res = await fetch("/api/battle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quizId, courseId }),
+      });
+      const json = await res.json();
+      if (res.ok) router.push(`/battle/${json.id}`);
+    } finally {
+      setStartingBattle(false);
+    }
+  }
 
   async function submit() {
     setSubmitting(true);
@@ -57,6 +78,12 @@ export function QuizRunner({
           ← Back to library
         </Link>
         <h1 className={styles.title}>{title}</h1>
+        {status === "ready" && !result && (
+          <Button variant="outline" size="sm" disabled={startingBattle} onClick={startBattle}>
+            <Swords size={14} />
+            {startingBattle ? "Starting…" : "Battle a friend"}
+          </Button>
+        )}
         {result && (
           <span className={styles.score}>
             {result.correctCount} / {result.total} correct (

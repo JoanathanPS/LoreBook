@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpenText, FileText, MessageSquare, Sparkles, Share2, LayoutDashboard } from "lucide-react";
+import { BookOpenText, FileText, MessageSquare, Sparkles, Share2, LayoutDashboard, Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createCourse } from "@/lib/actions/courses";
 import { signOut } from "@/lib/actions/auth";
@@ -11,6 +11,7 @@ import { UploadDropzone } from "@/components/library/UploadDropzone";
 import { DocumentStatusBadge } from "@/components/library/DocumentStatusBadge";
 import { ArtifactGenerator } from "@/components/library/ArtifactGenerator";
 import { CommandPaletteTrigger } from "@/components/command/CommandPaletteTrigger";
+import { InviteButton } from "@/components/collab/InviteButton";
 import { artifactHref } from "@/lib/study/artifact-links";
 import styles from "./page.module.css";
 
@@ -33,6 +34,7 @@ interface ArtifactRow {
 interface CourseRow {
   id: string;
   name: string;
+  user_id: string;
   documents: DocumentRow[];
   study_artifacts: ArtifactRow[];
 }
@@ -47,7 +49,7 @@ export default async function LibraryPage() {
   const { data: courses } = await supabase
     .from("courses")
     .select(
-      "id, name, documents(id, title, type, status, error_message, document_chunks(count)), study_artifacts(id, kind, title, status)",
+      "id, name, user_id, documents(id, title, type, status, error_message, document_chunks(count)), study_artifacts(id, kind, title, status)",
     )
     .order("created_at", { ascending: true })
     .returns<CourseRow[]>();
@@ -92,10 +94,15 @@ export default async function LibraryPage() {
             </div>
           ) : (
             <div className={styles.courses}>
-              {courses.map((course) => (
+              {courses.map((course) => {
+                const isOwner = course.user_id === user.id;
+                return (
                 <div key={course.id} className={styles.courseCard}>
                   <div className={styles.courseHeader}>
-                    <div className={styles.courseName}>{course.name}</div>
+                    <div className={styles.courseName}>
+                      {course.name}
+                      {!isOwner && <span className={styles.sharedBadge}>Shared</span>}
+                    </div>
                     <div className={styles.courseActions}>
                       <Button
                         render={<Link href={`/chat/${course.id}`} />}
@@ -115,6 +122,16 @@ export default async function LibraryPage() {
                         <Share2 size={14} />
                         Graph
                       </Button>
+                      <Button
+                        render={<Link href={`/predict/${course.id}`} />}
+                        nativeButton={false}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Target size={14} />
+                        Predict
+                      </Button>
+                      {isOwner && <InviteButton courseId={course.id} />}
                     </div>
                   </div>
 
@@ -163,7 +180,8 @@ export default async function LibraryPage() {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </main>

@@ -18,7 +18,7 @@ export default async function QuizPage({
 
   const { data: artifact } = await supabase
     .from("study_artifacts")
-    .select("id, title, status, error_message, content")
+    .select("id, title, status, error_message, content, course_id")
     .eq("id", id)
     .single();
 
@@ -34,6 +34,7 @@ export default async function QuizPage({
       <GradientMesh />
       <QuizRunner
         quizId={artifact.id}
+        courseId={artifact.course_id}
         title={artifact.title}
         status={artifact.status}
         errorMessage={artifact.error_message}

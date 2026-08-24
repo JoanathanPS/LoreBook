@@ -29,12 +29,11 @@ export async function nudgeMastery(
   await supabase.from("mastery_scores").upsert(rows, { onConflict: "user_id,concept_id" });
 }
 
-/** Finds or creates concepts by name for a course, linking them to the given artifact. */
-export async function upsertConcepts(
+/** Finds or creates concepts by name for a course, returning their ids. */
+async function resolveConceptIds(
   supabase: SupabaseClient,
   userId: string,
   courseId: string,
-  artifactId: string,
   names: string[],
 ): Promise<string[]> {
   if (names.length === 0) return [];
@@ -52,7 +51,18 @@ export async function upsertConcepts(
     .eq("course_id", courseId)
     .in("name", names);
 
-  const ids = (concepts ?? []).map((c) => c.id);
+  return (concepts ?? []).map((c) => c.id);
+}
+
+/** Finds or creates concepts by name for a course, linking them to the given artifact. */
+export async function upsertConcepts(
+  supabase: SupabaseClient,
+  userId: string,
+  courseId: string,
+  artifactId: string,
+  names: string[],
+): Promise<string[]> {
+  const ids = await resolveConceptIds(supabase, userId, courseId, names);
 
   if (ids.length > 0) {
     await supabase
@@ -60,6 +70,28 @@ export async function upsertConcepts(
       .upsert(
         ids.map((conceptId) => ({ concept_id: conceptId, artifact_id: artifactId, user_id: userId })),
         { onConflict: "concept_id,artifact_id", ignoreDuplicates: true },
+      );
+  }
+
+  return ids;
+}
+
+/** Finds or creates concepts by name for a course, linking them to the given document. */
+export async function linkDocumentConcepts(
+  supabase: SupabaseClient,
+  userId: string,
+  courseId: string,
+  documentId: string,
+  names: string[],
+): Promise<string[]> {
+  const ids = await resolveConceptIds(supabase, userId, courseId, names);
+
+  if (ids.length > 0) {
+    await supabase
+      .from("document_concepts")
+      .upsert(
+        ids.map((conceptId) => ({ concept_id: conceptId, document_id: documentId, user_id: userId })),
+        { onConflict: "concept_id,document_id", ignoreDuplicates: true },
       );
   }
 

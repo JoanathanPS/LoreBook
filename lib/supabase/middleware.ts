@@ -9,6 +9,9 @@ const PROTECTED_PREFIXES = [
   "/study",
   "/reels",
   "/graph",
+  "/predict",
+  "/battle",
+  "/join",
   "/settings",
 ];
 

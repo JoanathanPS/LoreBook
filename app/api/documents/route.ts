@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file");
   const courseId = formData.get("course_id");
+  const isExamPaper = formData.get("is_exam_paper") === "true";
 
   if (!(file instanceof File) || typeof courseId !== "string") {
     return NextResponse.json({ error: "Missing file or course_id" }, { status: 400 });
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
       title: file.name,
       storage_path: storagePath,
       status: "uploaded",
+      is_exam_paper: isExamPaper,
     })
     .select("id, title, type, status")
     .single();

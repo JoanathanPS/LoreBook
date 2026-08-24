@@ -1,0 +1,119 @@
+.wrap {
+  min-height: 100dvh;
+  padding: 2.5rem 1.5rem;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 1.5rem;
+}
+
+.inner {
+  width: 100%;
+  max-width: 34rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.backLink {
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.card {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  padding: 2rem;
+  display: grid;
+  gap: 1rem;
+  text-align: center;
+  justify-items: center;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.linkRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  background: var(--secondary);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  word-break: break-all;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+}
+
+.scoreEntry {
+  display: grid;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.scoreLabel {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.scoreValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.question {
+  width: 100%;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  padding: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.prompt {
+  font-size: 0.95rem;
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.choices {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.choice {
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--secondary);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.choice[data-selected="true"] {
+  border-color: var(--primary);
+}
+
+.error {
+  font-size: 0.8125rem;
+  color: var(--chart-5);
+}

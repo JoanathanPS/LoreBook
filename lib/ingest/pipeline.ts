@@ -6,6 +6,8 @@ import { extractDocx } from "./extractors/docx";
 import { extractImage } from "./extractors/image";
 import { extractAudio } from "./extractors/audio";
 import { extractNote } from "./extractors/note";
+import { extractConcepts } from "@/lib/ai/generate";
+import { linkDocumentConcepts } from "@/lib/study/mastery";
 import type { ExtractedSegment, DocumentType } from "./types";
 
 export async function processDocument(documentId: string): Promise<void> {
@@ -13,7 +15,7 @@ export async function processDocument(documentId: string): Promise<void> {
 
   const { data: doc, error: docError } = await supabase
     .from("documents")
-    .select("id, type, storage_path, title, user_id")
+    .select("id, type, storage_path, title, user_id, course_id")
     .eq("id", documentId)
     .single();
 
@@ -61,6 +63,16 @@ export async function processDocument(documentId: string): Promise<void> {
 
     const { error: insertError } = await supabase.from("document_chunks").insert(rows);
     if (insertError) throw new Error(insertError.message);
+
+    // Concept tagging is an enrichment, not core to ingestion succeeding —
+    // don't fail the whole upload if this one step has trouble.
+    try {
+      const fullText = segments.map((s) => s.text).join("\n\n").slice(0, 14000);
+      const concepts = await extractConcepts(fullText);
+      await linkDocumentConcepts(supabase, doc.user_id, doc.course_id, documentId, concepts);
+    } catch {
+      // best-effort
+    }
 
     await supabase.from("documents").update({ status: "ready" }).eq("id", documentId);
   } catch (err) {
