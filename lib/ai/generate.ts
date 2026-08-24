@@ -99,6 +99,26 @@ export async function generateQuiz(context: string, count = 8): Promise<QuizQues
   return object.questions;
 }
 
+const conceptsSchema = z.object({
+  concepts: z
+    .array(z.string().max(40))
+    .min(1)
+    .max(8)
+    .describe("2-8 short concept/topic names covered by this material, for a concept graph"),
+});
+
+/** Cheap, shared across every artifact kind — feeds the concept graph (Phase 6). */
+export async function extractConcepts(context: string): Promise<string[]> {
+  const { object } = await generateObject({
+    model: MODEL,
+    schema: conceptsSchema,
+    system:
+      "List the 2-8 most important distinct concepts, terms, or topics covered in the material below. Short names only (2-4 words each), no descriptions.",
+    prompt: context,
+  });
+  return object.concepts;
+}
+
 const reelSchema = z.object({
   concepts: z
     .array(z.string())

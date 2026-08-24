@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCourseContext } from "@/lib/ingest/context";
-import { generateSummaryText, generateFlashcards, generateQuiz } from "@/lib/ai/generate";
+import { generateSummaryText, generateFlashcards, generateQuiz, extractConcepts } from "@/lib/ai/generate";
+import { upsertConcepts } from "@/lib/study/mastery";
 
 export type ArtifactKind = "summary" | "flashcard_deck" | "quiz" | "formula_sheet";
 
@@ -71,6 +72,9 @@ export async function generateArtifact(params: {
         .update({ content: { questions }, status: "ready" })
         .eq("id", artifact.id);
     }
+
+    const concepts = await extractConcepts(context);
+    await upsertConcepts(supabase, user.id, params.courseId, artifact.id, concepts);
 
     return artifact.id;
   } catch (err) {

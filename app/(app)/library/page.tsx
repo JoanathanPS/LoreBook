@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpenText, FileText, MessageSquare, Sparkles } from "lucide-react";
+import { BookOpenText, FileText, MessageSquare, Sparkles, Share2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createCourse } from "@/lib/actions/courses";
 import { signOut } from "@/lib/actions/auth";
@@ -95,15 +95,26 @@ export default async function LibraryPage() {
                 <div key={course.id} className={styles.courseCard}>
                   <div className={styles.courseHeader}>
                     <div className={styles.courseName}>{course.name}</div>
-                    <Button
-                      render={<Link href={`/chat/${course.id}`} />}
-                      nativeButton={false}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <MessageSquare size={14} />
-                      Chat
-                    </Button>
+                    <div className={styles.courseActions}>
+                      <Button
+                        render={<Link href={`/chat/${course.id}`} />}
+                        nativeButton={false}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <MessageSquare size={14} />
+                        Chat
+                      </Button>
+                      <Button
+                        render={<Link href={`/graph/${course.id}`} />}
+                        nativeButton={false}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Share2 size={14} />
+                        Graph
+                      </Button>
+                    </div>
                   </div>
 
                   <UploadDropzone courseId={course.id} />

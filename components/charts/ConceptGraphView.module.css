@@ -1,0 +1,104 @@
+.wrap {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.header {
+  padding: 1.5rem 1.5rem 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.backLink {
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.backLink:hover {
+  color: var(--foreground);
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.legend {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.legendDot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  margin-right: 0.3rem;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 1fr 18rem;
+}
+
+@media (max-width: 800px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  border-left: 1px solid var(--glass-border);
+  padding: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.panelTitle {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.masteryBar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--secondary);
+  overflow: hidden;
+}
+
+.masteryFill {
+  height: 100%;
+}
+
+.artifactList {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.artifactLink {
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: var(--secondary);
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.artifactKind {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+.empty {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  padding: 1.5rem;
+}
