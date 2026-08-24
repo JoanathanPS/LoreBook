@@ -1,0 +1,68 @@
+.wrap {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.backLink {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.backLink:hover {
+  color: var(--foreground);
+}
+
+.card {
+  width: 100%;
+  max-width: 24rem;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-glass);
+  padding: 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.error {
+  font-size: 0.8125rem;
+  color: var(--chart-5);
+}
+
+.notice {
+  font-size: 0.8125rem;
+  color: var(--chart-2);
+}

@@ -1,0 +1,138 @@
+.section {
+  margin-inline: auto;
+  max-width: var(--container-max);
+  padding-inline: var(--container-pad-x);
+  padding-top: clamp(4rem, 10vw, 7rem);
+  padding-bottom: var(--space-section-y);
+  display: grid;
+  gap: 3rem;
+}
+
+.copy {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+  max-width: 42rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-4xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--muted-foreground);
+}
+
+.dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.headline {
+  font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+  line-height: 1.03;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.accentText {
+  color: var(--primary);
+}
+
+.subhead {
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ---- hero visual: static RAG-chat mockup panel ---- */
+.panel {
+  position: relative;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-glass);
+  overflow: hidden;
+  max-width: 44rem;
+  width: 100%;
+}
+
+.panelChrome {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.chromeDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.chromeLabel {
+  margin-left: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+}
+
+.panelBody {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.bubbleUser {
+  justify-self: end;
+  max-width: 80%;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-lg);
+  background: var(--secondary);
+  color: var(--foreground);
+}
+
+.bubbleAi {
+  max-width: 92%;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  background: color-mix(in oklab, var(--card) 70%, transparent);
+  color: var(--foreground);
+  display: grid;
+  gap: 0.6rem;
+}
+
+.citation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-4xl);
+  border: 1px solid var(--glass-border);
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-size: 0.7rem;
+}

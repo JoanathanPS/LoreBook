@@ -1,0 +1,58 @@
+.mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+}
+
+.blobGreen {
+  composes: blob;
+  top: -10%;
+  left: -8%;
+  width: 42vw;
+  height: 42vw;
+  background: var(--mesh-green);
+  opacity: 0.5;
+}
+
+.blobPurple {
+  composes: blob;
+  top: 8%;
+  right: -12%;
+  width: 46vw;
+  height: 46vw;
+  background: var(--mesh-purple);
+  opacity: 0.45;
+}
+
+.blobAmber {
+  composes: blob;
+  bottom: -18%;
+  left: 22%;
+  width: 38vw;
+  height: 38vw;
+  background: var(--mesh-amber);
+  opacity: 0.18;
+}
+
+.grainLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    var(--background) 100%
+  );
+}
