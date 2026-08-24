@@ -33,6 +33,18 @@
   font-size: 1.1rem;
 }
 
+.modeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modeHint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  line-height: 1.4;
+}
+
 .sourceList {
   display: grid;
   gap: 0.4rem;
@@ -116,6 +128,28 @@
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
   color: var(--foreground);
+}
+
+.citations {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.citationChip {
+  display: inline-flex;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-4xl);
+  border: 1px solid var(--glass-border);
+  color: var(--muted-foreground);
+}
+
+a.citationChip:hover {
+  color: var(--primary);
+  border-color: color-mix(in oklab, var(--primary) 40%, var(--glass-border));
 }
 
 .inputBar {

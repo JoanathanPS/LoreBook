@@ -1,0 +1,10 @@
+.player {
+  width: 100%;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: #000;
+}
+
+.audioPlayer {
+  width: 100%;
+}

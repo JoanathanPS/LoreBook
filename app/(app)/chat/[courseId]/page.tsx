@@ -16,7 +16,7 @@ export default async function ChatPage({
 
   const { data: course } = await supabase
     .from("courses")
-    .select("id, name, documents(id, title, status)")
+    .select("id, name, documents(id, title, status, type)")
     .eq("id", courseId)
     .single();
 
