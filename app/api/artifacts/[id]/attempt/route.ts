@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { QuizQuestion } from "@/lib/ai/generate";
+import { recordActivity } from "@/lib/study/streaks";
 
 export async function POST(
   request: Request,
@@ -39,6 +40,8 @@ export async function POST(
     score,
     answers: { answers },
   });
+
+  await recordActivity(supabase, user.id, 10);
 
   return NextResponse.json({
     score,

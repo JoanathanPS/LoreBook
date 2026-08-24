@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { schedule, type Grade } from "@/lib/srs/sm2";
+import { recordActivity } from "@/lib/study/streaks";
 
 export async function POST(
   request: Request,
@@ -39,6 +40,8 @@ export async function POST(
     .eq("id", id);
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+
+  await recordActivity(supabase, user.id, 2);
 
   return NextResponse.json({ dueAt: next.dueAt.toISOString(), intervalDays: next.intervalDays });
 }

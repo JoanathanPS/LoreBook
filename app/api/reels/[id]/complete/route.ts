@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { nudgeMastery } from "@/lib/study/mastery";
+import { recordActivity } from "@/lib/study/streaks";
 
 export async function POST(
   request: Request,
@@ -29,6 +30,7 @@ export async function POST(
   const accuracy = total > 0 ? correctCount / total : 0.5;
 
   await nudgeMastery(supabase, user.id, conceptIds, accuracy);
+  await recordActivity(supabase, user.id, 15);
 
   return NextResponse.json({ ok: true });
 }

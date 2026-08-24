@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpenText, FileText, MessageSquare, Sparkles, Share2 } from "lucide-react";
+import { BookOpenText, FileText, MessageSquare, Sparkles, Share2, LayoutDashboard } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createCourse } from "@/lib/actions/courses";
 import { signOut } from "@/lib/actions/auth";
@@ -68,11 +68,17 @@ export default async function LibraryPage() {
               <BookOpenText size={16} style={{ display: "inline", marginRight: 6 }} />
               LoreBook
             </Link>
-            <form action={signOut}>
-              <Button type="submit" variant="ghost" size="sm">
-                Sign out
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <Button render={<Link href="/dashboard" />} nativeButton={false} variant="ghost" size="sm">
+                <LayoutDashboard size={14} />
+                Dashboard
               </Button>
-            </form>
+              <form action={signOut}>
+                <Button type="submit" variant="ghost" size="sm">
+                  Sign out
+                </Button>
+              </form>
+            </div>
           </div>
         </header>
 

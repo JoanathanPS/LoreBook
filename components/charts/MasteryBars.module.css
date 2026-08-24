@@ -1,0 +1,42 @@
+.list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 8rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8125rem;
+}
+
+.name {
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--secondary);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+}
+
+.value {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.empty {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}

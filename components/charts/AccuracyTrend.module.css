@@ -1,0 +1,30 @@
+.svg {
+  width: 100%;
+  height: auto;
+}
+
+.gridline {
+  stroke: var(--glass-border);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.area {
+  fill: color-mix(in oklab, var(--primary) 18%, transparent);
+  stroke: none;
+}
+
+.line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+
+.dot {
+  fill: var(--primary);
+}
+
+.empty {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
