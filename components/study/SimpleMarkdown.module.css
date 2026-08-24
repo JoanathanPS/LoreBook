@@ -31,3 +31,13 @@
   padding-left: 1.25rem;
   list-style: disc;
 }
+
+.list ol,
+.list ul {
+  margin-top: 0.35rem;
+  list-style: circle;
+}
+
+.list ol {
+  list-style: decimal;
+}
