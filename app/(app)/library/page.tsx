@@ -11,6 +11,7 @@ import { UploadDropzone } from "@/components/library/UploadDropzone";
 import { DocumentStatusBadge } from "@/components/library/DocumentStatusBadge";
 import { ArtifactGenerator } from "@/components/library/ArtifactGenerator";
 import { CommandPaletteTrigger } from "@/components/command/CommandPaletteTrigger";
+import { SoundToggle } from "@/components/audio/SoundToggle";
 import { InviteButton } from "@/components/collab/InviteButton";
 import { artifactHref } from "@/lib/study/artifact-links";
 import styles from "./page.module.css";
@@ -66,6 +67,7 @@ export default async function LibraryPage() {
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
+              <SoundToggle />
               <Button render={<Link href="/dashboard" />} nativeButton={false} variant="ghost" size="sm">
                 <LayoutDashboard size={14} />
                 Dashboard

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AccuracyTrend } from "@/components/charts/AccuracyTrend";
 import { MasteryBars } from "@/components/charts/MasteryBars";
 import { CommandPaletteTrigger } from "@/components/command/CommandPaletteTrigger";
+import { SoundToggle } from "@/components/audio/SoundToggle";
 import styles from "./page.module.css";
 
 interface MasteryJoinRow {
@@ -69,6 +70,7 @@ export default async function DashboardPage() {
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
+              <SoundToggle />
               <Button render={<Link href="/library" />} nativeButton={false} variant="ghost" size="sm">
                 <Library size={14} />
                 Library

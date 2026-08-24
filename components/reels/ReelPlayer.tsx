@@ -7,6 +7,7 @@ import { Volume2, VolumeX } from "lucide-react";
 import { RecallDeck } from "./RecallDeck";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
+import { playSwipe } from "@/lib/audio/sounds";
 import type { RecallQuestion } from "@/lib/ai/generate";
 import styles from "./ReelPlayer.module.css";
 
@@ -80,11 +81,17 @@ export function ReelPlayer({
   function handleDragEnd(_e: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) {
     const swipedUp = info.offset.y < -80 || info.velocity.y < -600;
     const swipedDown = info.offset.y > 80 || info.velocity.y > 600;
-    if (swipedUp) goTo(index + 1);
-    else if (swipedDown) goTo(index - 1);
+    if (swipedUp) {
+      playSwipe();
+      goTo(index + 1);
+    } else if (swipedDown) {
+      playSwipe();
+      goTo(index - 1);
+    }
   }
 
   function handleTap(clientX: number) {
+    playSwipe();
     const isLeft = clientX < window.innerWidth / 2;
     goTo(isLeft ? index - 1 : index + 1);
   }

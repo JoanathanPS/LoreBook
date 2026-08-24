@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
+import { playFlip } from "@/lib/audio/sounds";
 import type { Grade } from "@/lib/srs/sm2";
 import styles from "./FlashcardReview.module.css";
 
@@ -78,7 +79,10 @@ export function FlashcardReview({
           <button
             type="button"
             className={styles.flipScene}
-            onClick={() => setShowBack((s) => !s)}
+            onClick={() => {
+              playFlip();
+              setShowBack((s) => !s);
+            }}
             aria-label={showBack ? "Showing answer — tap to show question" : "Showing question — tap to show answer"}
           >
             <motion.div
@@ -115,7 +119,14 @@ export function FlashcardReview({
               ))}
             </div>
           ) : (
-            <Button onClick={() => setShowBack(true)}>Show answer</Button>
+            <Button
+              onClick={() => {
+                playFlip();
+                setShowBack(true);
+              }}
+            >
+              Show answer
+            </Button>
           )}
         </>
       )}

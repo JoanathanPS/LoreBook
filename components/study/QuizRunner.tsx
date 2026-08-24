@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { playCorrect, playIncorrect } from "@/lib/audio/sounds";
 import type { QuizQuestion } from "@/lib/ai/generate";
 import styles from "./QuizRunner.module.css";
 
@@ -66,6 +67,8 @@ export function QuizRunner({
       });
       const json: AttemptResult = await res.json();
       setResult(json);
+      if (json.score >= 0.5) playCorrect();
+      else playIncorrect();
     } finally {
       setSubmitting(false);
     }

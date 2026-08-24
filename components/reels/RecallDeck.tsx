@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
+import { playCorrect, playIncorrect } from "@/lib/audio/sounds";
 import type { RecallQuestion } from "@/lib/ai/generate";
 import styles from "./RecallDeck.module.css";
 
@@ -25,6 +26,8 @@ export function RecallDeck({
     const wasCorrect = saidTrue === current.isTrue;
     const nextCorrect = correct + (wasCorrect ? 1 : 0);
     setCorrect(nextCorrect);
+    if (wasCorrect) playCorrect();
+    else playIncorrect();
 
     if (index + 1 >= questions.length) {
       setFinished(true);
