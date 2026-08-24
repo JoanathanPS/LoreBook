@@ -1,0 +1,45 @@
+.wrap {
+  min-height: 100dvh;
+  padding: 2.5rem 1.5rem;
+  display: grid;
+  justify-items: center;
+}
+
+.inner {
+  width: 100%;
+  max-width: 42rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.backLink {
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.backLink:hover {
+  color: var(--foreground);
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.card {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  padding: 2rem;
+}
+
+.pending {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.error {
+  color: var(--chart-5);
+  font-size: 0.875rem;
+}

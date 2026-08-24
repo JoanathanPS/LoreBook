@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpenText, FileText, MessageSquare } from "lucide-react";
+import { BookOpenText, FileText, MessageSquare, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createCourse } from "@/lib/actions/courses";
 import { signOut } from "@/lib/actions/auth";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UploadDropzone } from "@/components/library/UploadDropzone";
 import { DocumentStatusBadge } from "@/components/library/DocumentStatusBadge";
+import { ArtifactGenerator } from "@/components/library/ArtifactGenerator";
 import styles from "./page.module.css";
 
 interface DocumentRow {
@@ -20,11 +21,26 @@ interface DocumentRow {
   document_chunks: { count: number }[];
 }
 
+interface ArtifactRow {
+  id: string;
+  kind: string;
+  title: string;
+  status: string;
+}
+
 interface CourseRow {
   id: string;
   name: string;
   documents: DocumentRow[];
+  study_artifacts: ArtifactRow[];
 }
+
+const ARTIFACT_HREF: Record<string, string> = {
+  summary: "/study/summary",
+  formula_sheet: "/study/summary",
+  flashcard_deck: "/study/flashcards",
+  quiz: "/study/quiz",
+};
 
 export default async function LibraryPage() {
   const supabase = await createClient();
@@ -36,7 +52,7 @@ export default async function LibraryPage() {
   const { data: courses } = await supabase
     .from("courses")
     .select(
-      "id, name, documents(id, title, type, status, error_message, document_chunks(count))",
+      "id, name, documents(id, title, type, status, error_message, document_chunks(count)), study_artifacts(id, kind, title, status)",
     )
     .order("created_at", { ascending: true })
     .returns<CourseRow[]>();
@@ -110,6 +126,29 @@ export default async function LibraryPage() {
                       ))}
                     </div>
                   )}
+
+                  <div className={styles.studySection}>
+                    <div className={styles.studyLabel}>
+                      <Sparkles size={13} />
+                      Study tools
+                    </div>
+                    <ArtifactGenerator courseId={course.id} courseName={course.name} />
+
+                    {course.study_artifacts.length > 0 && (
+                      <div className={styles.docList}>
+                        {course.study_artifacts.map((artifact) => (
+                          <Link
+                            key={artifact.id}
+                            href={`${ARTIFACT_HREF[artifact.kind] ?? "/study/summary"}/${artifact.id}`}
+                            className={styles.docRow}
+                          >
+                            <span className={styles.docTitle}>{artifact.title}</span>
+                            <DocumentStatusBadge status={artifact.status} />
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

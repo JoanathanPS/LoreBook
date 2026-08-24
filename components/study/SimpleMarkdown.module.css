@@ -1,0 +1,33 @@
+.wrap {
+  display: grid;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--foreground);
+}
+
+.wrap h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+.wrap h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+.wrap h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-top: 0.5rem;
+}
+
+.list {
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
