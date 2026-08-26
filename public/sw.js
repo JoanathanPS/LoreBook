@@ -4,7 +4,7 @@
 // webpack plugins, so a build-integrated SW generator wouldn't actually run.
 // A plain static file has no such dependency.
 
-const CACHE_NAME = "lorebook-v1";
+const CACHE_NAME = "lorebook-v2";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

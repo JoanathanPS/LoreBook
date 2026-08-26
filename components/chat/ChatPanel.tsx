@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { FileText, Send, Mic, Volume2, VolumeX, GraduationCap } from "lucide-react";
+import {
+  FileText,
+  Send,
+  Mic,
+  Play,
+  Pause,
+  GraduationCap,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ChatSource } from "@/app/api/chat/route";
@@ -24,6 +32,7 @@ interface SpeechRecognitionLike {
   interimResults: boolean;
   onresult: ((event: unknown) => void) | null;
   onend: (() => void) | null;
+  onerror: ((event: unknown) => void) | null;
 }
 
 function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
@@ -39,6 +48,59 @@ function formatTimestamp(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 }
 
+const RATES = [0.75, 1, 1.25, 1.5] as const;
+
+/** Play/pause + speed control for one assistant reply. Only one message can
+ * be speaking at a time (the Web Speech API has a single global queue), so
+ * playback state is owned by the parent and passed in. */
+function SpeechControls({
+  messageId,
+  text,
+  speakingId,
+  paused,
+  rate,
+  onToggle,
+  onRateChange,
+}: {
+  messageId: string;
+  text: string;
+  speakingId: string | null;
+  paused: boolean;
+  rate: number;
+  onToggle: (id: string, text: string) => void;
+  onRateChange: (id: string, text: string, rate: number) => void;
+}) {
+  const isThis = speakingId === messageId;
+  const isPlaying = isThis && !paused;
+
+  return (
+    <div className={styles.speechControls}>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        onClick={() => onToggle(messageId, text)}
+        aria-label={isPlaying ? "Pause reading this reply" : "Read this reply aloud"}
+      >
+        {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+      </Button>
+      <div className={styles.rateGroup}>
+        {RATES.map((r) => (
+          <button
+            key={r}
+            type="button"
+            className={styles.rateButton}
+            data-active={isThis && rate === r}
+            onClick={() => onRateChange(messageId, text, r)}
+          >
+            {r}×
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ChatPanel({
   courseId,
   courseName,
@@ -50,32 +112,42 @@ export function ChatPanel({
 }) {
   const [input, setInput] = useState("");
   const [tutorMode, setTutorMode] = useState(false);
-  const [speakReplies, setSpeakReplies] = useState(false);
   const [listening, setListening] = useState(false);
-  const tutorModeRef = useRef(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [rate, setRate] = useState(1);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const spokenIdsRef = useRef(new Set<string>());
 
   const [transport] = useState(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: () => ({ courseId, tutorMode: tutorModeRef.current }),
+        body: () => ({ courseId }),
       }),
   );
   const { messages, sendMessage, status, error } = useChat({ transport });
 
   const pending = status === "submitted" || status === "streaming";
-  const SpeechRecognitionCtor = getSpeechRecognition();
+
+  // Speech-recognition support depends on `window`, so it must start out
+  // false on both server and first client render (they need to match for
+  // hydration) and only flip on after mount — otherwise the mic button
+  // exists in the client tree but not the server tree, which shifts every
+  // node after it (including the submit button) and breaks hydration.
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  useEffect(() => {
+    setVoiceSupported(getSpeechRecognition() !== null);
+  }, []);
 
   function toggleTutorMode() {
-    const next = !tutorMode;
-    tutorModeRef.current = next;
-    setTutorMode(next);
+    setTutorMode((v) => !v);
   }
 
   function toggleListening() {
+    const SpeechRecognitionCtor = getSpeechRecognition();
     if (!SpeechRecognitionCtor) return;
+    setVoiceError(null);
     if (listening) {
       recognitionRef.current?.stop();
       return;
@@ -88,33 +160,66 @@ export function ChatPanel({
       const transcript = result.results?.[0]?.[0]?.transcript ?? "";
       setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
     };
+    recognition.onerror = (event) => {
+      const err = (event as { error?: string }).error ?? "unknown";
+      const message =
+        err === "not-allowed" || err === "service-not-allowed"
+          ? "Microphone access was blocked — allow it in your browser's site settings."
+          : err === "network"
+            ? "Voice input needs a network connection some browsers (e.g. Brave, with Shields on) block by default."
+            : err === "no-speech"
+              ? "Didn't catch that — try again."
+              : `Voice input failed (${err}).`;
+      setVoiceError(message);
+      setListening(false);
+    };
     recognition.onend = () => setListening(false);
     recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
+    try {
+      recognition.start();
+      setListening(true);
+    } catch {
+      setVoiceError("Couldn't start voice input.");
+    }
   }
 
-  // Read the latest assistant reply aloud once it finishes, if enabled.
-  useEffect(() => {
-    if (!speakReplies || pending || typeof window === "undefined") return;
-    const last = messages[messages.length - 1];
-    if (!last || last.role !== "assistant" || spokenIdsRef.current.has(last.id)) return;
-
-    const text = last.parts
-      .filter((p) => p.type === "text")
-      .map((p) => (p as { text: string }).text)
-      .join(" ");
-    if (!text.trim()) return;
-
-    spokenIdsRef.current.add(last.id);
+  function speakFrom(id: string, text: string, atRate: number) {
+    if (typeof window === "undefined" || !text.trim()) return;
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-  }, [messages, pending, speakReplies]);
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = atRate;
+    utterance.onend = () => {
+      setSpeakingId((current) => (current === id ? null : current));
+      setPaused(false);
+    };
+    setSpeakingId(id);
+    setPaused(false);
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleTogglePlay(id: string, text: string) {
+    if (speakingId !== id) {
+      speakFrom(id, text, rate);
+      return;
+    }
+    if (paused) {
+      window.speechSynthesis.resume();
+      setPaused(false);
+    } else {
+      window.speechSynthesis.pause();
+      setPaused(true);
+    }
+  }
+
+  function handleRateChange(id: string, text: string, newRate: number) {
+    setRate(newRate);
+    if (speakingId === id) speakFrom(id, text, newRate);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim() || pending) return;
-    sendMessage({ text: input });
+    sendMessage({ text: input }, { body: { courseId, tutorMode } });
     setInput("");
   }
 
@@ -136,19 +241,11 @@ export function ChatPanel({
             <GraduationCap size={14} />
             Tutor mode
           </Button>
-          <Button
-            type="button"
-            variant={speakReplies ? "default" : "outline"}
-            size="icon-sm"
-            onClick={() => setSpeakReplies((v) => !v)}
-            aria-label={speakReplies ? "Mute spoken replies" : "Read replies aloud"}
-          >
-            {speakReplies ? <Volume2 size={14} /> : <VolumeX size={14} />}
-          </Button>
         </div>
         {tutorMode && (
-          <p className={styles.modeHint}>
-            Tutor mode: I&apos;ll ask you questions instead of just answering.
+          <p className={styles.modeHint} data-active="true">
+            Tutor mode is on — I&apos;ll ask you questions instead of just
+            answering, starting with your next message.
           </p>
         )}
 
@@ -193,14 +290,27 @@ export function ChatPanel({
           {messages.map((message) => {
             const sources = (message.metadata as { sources?: ChatSource[] } | undefined)
               ?.sources;
+            const text = message.parts
+              .filter((part) => part.type === "text")
+              .map((part) => (part as { text: string }).text)
+              .join("");
+
             return (
               <div key={message.id} className={styles.messageRow} data-role={message.role}>
                 <div className={styles.bubble} data-role={message.role}>
-                  {message.parts
-                    .filter((part) => part.type === "text")
-                    .map((part, i) => (
-                      <span key={i}>{(part as { text: string }).text}</span>
-                    ))}
+                  <div className={styles.bubbleText}>{text}</div>
+
+                  {message.role === "assistant" && text.trim() && (
+                    <SpeechControls
+                      messageId={message.id}
+                      text={text}
+                      speakingId={speakingId}
+                      paused={paused}
+                      rate={rate}
+                      onToggle={handleTogglePlay}
+                      onRateChange={handleRateChange}
+                    />
+                  )}
 
                   {sources && sources.length > 0 && (
                     <div className={styles.citations}>
@@ -210,14 +320,28 @@ export function ChatPanel({
                             key={s.index}
                             href={`/document/${s.documentId}?t=${Math.floor(s.timestampRef)}`}
                             className={styles.citationChip}
+                            target="_blank"
                           >
                             [{s.index}] {s.documentTitle} · {formatTimestamp(s.timestampRef)}
                           </Link>
+                        ) : s.pageRef !== null ? (
+                          <Link
+                            key={s.index}
+                            href={`/document/${s.documentId}?page=${s.pageRef}`}
+                            className={styles.citationChip}
+                            target="_blank"
+                          >
+                            [{s.index}] {s.documentTitle}, p. {s.pageRef}
+                          </Link>
                         ) : (
-                          <span key={s.index} className={styles.citationChip}>
+                          <Link
+                            key={s.index}
+                            href={`/document/${s.documentId}`}
+                            className={styles.citationChip}
+                            target="_blank"
+                          >
                             [{s.index}] {s.documentTitle}
-                            {s.pageRef ? `, p. ${s.pageRef}` : ""}
-                          </span>
+                          </Link>
                         ),
                       )}
                     </div>
@@ -228,6 +352,12 @@ export function ChatPanel({
           })}
         </div>
 
+        {voiceError && (
+          <p className={styles.error}>
+            <AlertCircle size={13} />
+            {voiceError}
+          </p>
+        )}
         {error && <p className={styles.error}>{error.message}</p>}
 
         <form onSubmit={handleSubmit} className={styles.inputBar}>
@@ -239,7 +369,7 @@ export function ChatPanel({
             }
             disabled={pending}
           />
-          {SpeechRecognitionCtor && (
+          {voiceSupported && (
             <Button
               type="button"
               variant={listening ? "default" : "outline"}

@@ -113,8 +113,8 @@
   border-radius: var(--radius-2xl);
   background: linear-gradient(
     155deg,
-    color-mix(in oklab, var(--mesh-purple) 55%, #0a0a0f),
-    color-mix(in oklab, var(--mesh-green) 45%, #0a0a0f)
+    color-mix(in oklab, var(--primary) 55%, #0a0a0f),
+    color-mix(in oklab, var(--foreground) 55%, #0a0a0f)
   );
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2.5rem 2rem;

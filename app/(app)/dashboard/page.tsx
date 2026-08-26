@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpenText, Flame, LayoutDashboard, Library, Star } from "lucide-react";
+import { Flame, Library, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
@@ -65,8 +65,7 @@ export default async function DashboardPage() {
         <header className={styles.header}>
           <div className={styles.headerInner}>
             <Link href="/" className={styles.brand}>
-              <BookOpenText size={16} style={{ display: "inline", marginRight: 6 }} />
-              LoreBook
+              lore.book
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
@@ -85,10 +84,10 @@ export default async function DashboardPage() {
         </header>
 
         <main className={styles.main}>
-          <h1 className={styles.title}>
-            <LayoutDashboard size={20} style={{ display: "inline", marginRight: 8 }} />
-            Dashboard
-          </h1>
+          <div className={styles.heading}>
+            <span className={styles.eyebrow}>Your progress</span>
+            <h1 className={styles.title}>The ledger.</h1>
+          </div>
 
           <div className={styles.grid}>
             <div className={styles.card}>

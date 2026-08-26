@@ -36,6 +36,13 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local dev tooling (skills/plugins, not app source)
+/.agents/
+/.claude/
+/scrollcraft/
+skills-lock.json
+/supabase/.temp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

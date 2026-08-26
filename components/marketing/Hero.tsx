@@ -1,33 +1,36 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { KnowledgeOrbLoader } from "./KnowledgeOrbLoader";
 import styles from "./Hero.module.css";
 
 export function Hero() {
   return (
     <section className={styles.section}>
-      <div className={styles.orb} aria-hidden="true">
-        <KnowledgeOrbLoader />
-      </div>
+      <div className={styles.cover}>
+        <Image
+          src="/brand/lore-mark.png"
+          alt=""
+          width={220}
+          height={275}
+          priority
+          className={styles.mark}
+          aria-hidden="true"
+        />
 
-      <div className={styles.copy}>
-        <span className={styles.eyebrow}>
-          <span className={styles.dot} />
-          Built for engineering coursework
+        <span className={styles.eyebrow} data-anim="fade-up">
+          A study workspace, not another app to manage
         </span>
 
         <h1 className={styles.headline} data-anim="headline">
-          Turn your course material into a{" "}
-          <span className={styles.accentText}>study workspace</span> that
-          talks back.
+          lore<span className={styles.dot}>.</span>book
         </h1>
 
         <p className={styles.subhead} data-anim="fade-up">
-          Upload PDFs, lecture recordings, and photographed notes. LoreBook
-          reads the diagrams, cites the exact page or timestamp, and turns
-          any topic into flashcards, quizzes, and a concept map you can
-          actually track mastery against.
+          Upload the PDF, the lecture recording, or the photo of your notes.
+          LoreBook reads it, cites the exact page or timestamp when it
+          answers, and turns the material into flashcards, quizzes, and a
+          concept map you can watch fill in.
         </p>
 
         <div className={styles.ctaRow} data-anim="fade-up">
@@ -37,26 +40,23 @@ export function Hero() {
               nativeButton={false}
               size="lg"
             >
-              Get started
+              Start your first chapter
               <ArrowRight />
             </Button>
           </span>
           <Button
-            render={<a href="#modules" />}
+            render={<a href="#chapters" />}
             nativeButton={false}
             variant="outline"
             size="lg"
           >
-            See how it works
+            See what&rsquo;s inside
           </Button>
         </div>
       </div>
 
       <div className={styles.panel} data-anim="fade-up">
         <div className={styles.panelChrome}>
-          <span className={styles.chromeDot} />
-          <span className={styles.chromeDot} />
-          <span className={styles.chromeDot} />
           <span className={styles.chromeLabel}>
             thermodynamics-week6.pdf — chat
           </span>

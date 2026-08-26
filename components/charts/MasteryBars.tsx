@@ -6,9 +6,9 @@ interface MasteryRow {
 }
 
 function colorFor(score: number): string {
-  if (score < 0.4) return "#d66b6b";
-  if (score < 0.7) return "#f2b341";
-  return "#3fae82";
+  if (score < 0.4) return "var(--destructive)";
+  if (score < 0.7) return "var(--gilt)";
+  return "var(--chart-2)";
 }
 
 export function MasteryBars({ rows }: { rows: MasteryRow[] }) {

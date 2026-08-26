@@ -1,0 +1,61 @@
+.section {
+  margin-inline: auto;
+  max-width: 44rem;
+  padding-inline: var(--container-pad-x);
+  padding-block: var(--space-section-y);
+  display: grid;
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gilt);
+}
+
+.rule {
+  width: 3rem;
+  height: 1px;
+  background: var(--primary);
+  border: none;
+  margin: 0;
+}
+
+.body {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--foreground);
+}
+
+.body + .body {
+  margin-top: 0.9rem;
+}
+
+.signoff {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--foreground);
+}
+
+.resume {
+  font-size: 0.875rem;
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.resume:hover {
+  text-decoration-color: var(--primary);
+}

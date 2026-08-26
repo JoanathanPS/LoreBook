@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpenText, FileText, MessageSquare, Sparkles, Share2, LayoutDashboard, Target } from "lucide-react";
+import { FileText, MessageSquare, Sparkles, Share2, LayoutDashboard, Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createCourse } from "@/lib/actions/courses";
 import { signOut } from "@/lib/actions/auth";
@@ -47,13 +47,20 @@ export default async function LibraryPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: courses } = await supabase
+  const { data: courses, error: coursesError } = await supabase
     .from("courses")
     .select(
       "id, name, user_id, documents(id, title, type, status, error_message, document_chunks(count)), study_artifacts(id, kind, title, status)",
     )
     .order("created_at", { ascending: true })
     .returns<CourseRow[]>();
+
+  if (coursesError) {
+    // A courses row can genuinely exist while this query still fails (RLS
+    // policy error, bad migration state, etc.) — showing the empty state
+    // in that case hides a real problem, so surface it instead.
+    console.error("[library] failed to load courses:", coursesError);
+  }
 
   return (
     <>
@@ -62,8 +69,7 @@ export default async function LibraryPage() {
         <header className={styles.header}>
           <div className={styles.headerInner}>
             <Link href="/" className={styles.brand}>
-              <BookOpenText size={16} style={{ display: "inline", marginRight: 6 }} />
-              LoreBook
+              lore.book
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
@@ -82,14 +88,21 @@ export default async function LibraryPage() {
         </header>
 
         <main className={styles.main}>
-          <h1 className={styles.title}>Library</h1>
+          <h1 className={styles.title}>The shelf.</h1>
 
           <form action={createCourse} className={styles.createForm}>
             <Input name="name" placeholder="New course name (e.g. Thermodynamics)" required />
             <Button type="submit">Create</Button>
           </form>
 
-          {!courses || courses.length === 0 ? (
+          {coursesError ? (
+            <div className={styles.empty}>
+              Couldn&rsquo;t load your courses ({coursesError.message}). If you can see
+              rows in the Supabase table editor but not here, your database is
+              likely missing a migration — check that every file in
+              supabase/migrations has been run, especially 0009_fix_rls_recursion.sql.
+            </div>
+          ) : !courses || courses.length === 0 ? (
             <div className={styles.empty}>
               No courses yet — create one above, then upload the material you want to
               study from into it.

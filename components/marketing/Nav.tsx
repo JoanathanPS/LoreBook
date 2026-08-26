@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { BookOpenText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import styles from "./Nav.module.css";
 
 const LINKS = [
-  { href: "#modules", label: "Modules" },
+  { href: "#chapters", label: "Chapters" },
   { href: "#how-it-works", label: "How it works" },
 ];
 
@@ -13,10 +12,7 @@ export function Nav() {
     <header className={styles.nav}>
       <div className={styles.inner}>
         <Link href="/" className={styles.brand}>
-          <span className={styles.mark}>
-            <BookOpenText size={16} strokeWidth={2.25} />
-          </span>
-          LoreBook
+          lore<span className={styles.dot}>.</span>book
         </Link>
 
         <nav className={styles.links}>

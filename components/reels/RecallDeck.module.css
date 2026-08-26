@@ -68,12 +68,18 @@
   min-height: 44px;
 }
 
+/*
+ * This stage is a fixed near-black surface independent of the app theme
+ * (like ReelPlayer's), so these read against #060608 directly rather than
+ * the shared --chart-* tokens, which are tuned for the light parchment
+ * background and would be nearly invisible here.
+ */
 .legendFalse {
-  color: var(--chart-5);
+  color: #e08585;
 }
 
 .legendTrue {
-  color: var(--chart-2);
+  color: #7dc9a0;
 }
 
 .done {

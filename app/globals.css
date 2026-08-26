@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,46 +49,48 @@
 }
 
 /*
- * StudyLens design tokens — PLAN.md §6.
- * Dark-mode-first: :root itself carries the dark palette (no separate
- * light theme yet). `.dark` mirrors :root so shadcn primitives that key
- * off the `dark:` variant keep working if a light mode is added later.
+ * StudyLens design tokens — "nostalgia": ink-on-parchment, the whole app,
+ * not just the landing page. One palette in :root; no separate dark theme
+ * exists (the `dark` variant/class stay wired for shadcn primitives but
+ * nothing currently opts into it).
  */
 :root {
   /* ---- surfaces ---- */
-  --background: #0a0a0f;
-  --background-subtle: #0d0d13;
-  --foreground: #f2f2f6;
+  --background: #f3ecda;
+  --background-subtle: #ede3cb;
+  --foreground: #26313f;
 
-  --card: #121218;
+  --card: #ede3cb;
   --card-foreground: var(--foreground);
-  --popover: #14141b;
+  --popover: #f3ecda;
   --popover-foreground: var(--foreground);
 
   /* ---- brand ---- */
-  --primary: #f2b341; /* single electric accent — amber, per §6 */
-  --primary-foreground: #14110a;
+  --primary: #7b3232; /* oxblood — leather binding, wax seal */
+  --primary-foreground: #f3ecda;
 
-  --secondary: #16161d;
+  --secondary: #e6dcc2;
   --secondary-foreground: var(--foreground);
-  --muted: #16161d;
-  --muted-foreground: #9a9aa8;
-  --accent: #1b1b24; /* neutral hover/active surface (shadcn convention) */
+  --muted: #e6dcc2;
+  --muted-foreground: #5b6a78;
+  --accent: #e6dcc2;
   --accent-foreground: var(--foreground);
 
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.1);
-  --ring: rgba(242, 179, 65, 0.5);
+  --gilt: #a07c3e; /* rare decorative accent — dividers, small marks */
 
-  /* qualitative chart palette (D3 charts land in a later phase) */
-  --chart-1: #f2b341;
-  --chart-2: #3fae82;
-  --chart-3: #8b7fd6;
-  --chart-4: #5b8fd6;
-  --chart-5: #d66b6b;
+  --destructive: #a13b2e;
+  --border: rgba(38, 49, 64, 0.16);
+  --input: rgba(38, 49, 64, 0.2);
+  --ring: rgba(123, 50, 50, 0.45);
 
-  --radius: 0.75rem;
+  /* qualitative chart palette — muted, ink-compatible, tuned for parchment */
+  --chart-1: #7b3232;
+  --chart-2: #4b6a4e;
+  --chart-3: #a07c3e;
+  --chart-4: #52708a;
+  --chart-5: #6b4c6b;
+
+  --radius: 0.25rem;
 
   --sidebar: var(--background-subtle);
   --sidebar-foreground: var(--foreground);
@@ -99,66 +101,34 @@
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 
-  /* ---- fonts (bound to next/font variables set in layout.tsx) ---- */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* ---- fonts (bound to next/font-local variables set in layout.tsx) ----
+   * Fallbacks deliberately stop at Georgia — never fall through to a bare
+   * `serif` keyword, which resolves to Times New Roman on Windows. Fraunces
+   * and Lora are self-hosted (public/fonts/), so this fallback should only
+   * ever be seen for a flash before the local font file paints.
+   */
+  --font-display: var(--font-fraunces), "Fraunces", Georgia, "Palatino Linotype", sans-serif;
+  --font-body: var(--font-lora), "Lora", Georgia, "Palatino Linotype", sans-serif;
+  --font-sans: var(--font-lora), "Lora", Georgia, "Palatino Linotype", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 
-  /* ---- gradient mesh + glass (marketing/bespoke surfaces, §6) ---- */
-  --mesh-green: #1f4d3f;
-  --mesh-purple: #3a2a5c;
-  --mesh-amber: color-mix(in oklab, var(--primary) 55%, transparent);
-  --glass-bg: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-blur: 20px;
-  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.45);
-  --shadow-glow-primary:
-    0 0 0 1px rgba(242, 179, 65, 0.4), 0 8px 24px rgba(242, 179, 65, 0.15);
+  /* ---- ambient background + surfaces: flat paper, no glass/blur ---- */
+  --glass-bg: var(--card);
+  --glass-border: var(--border);
+  --glass-blur: 0px;
+  --shadow-glass: 0 1px 0 var(--border), 0 12px 24px -16px rgba(38, 49, 64, 0.35);
+  --shadow-glow-primary: 0 0 0 1px rgba(123, 50, 50, 0.35);
 
   /* ---- layout rhythm (shared source of truth: Tailwind + CSS Modules) ---- */
   --space-section-y: clamp(4rem, 8vw, 7rem);
   --container-max: 80rem;
   --container-pad-x: clamp(1.25rem, 5vw, 3rem);
 
-  /* ---- motion (defined now, consumed from Phase 8 onward) ---- */
+  /* ---- motion ---- */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --duration-fast: 150ms;
   --duration-base: 250ms;
-}
-
-.dark {
-  --background: #0a0a0f;
-  --background-subtle: #0d0d13;
-  --foreground: #f2f2f6;
-  --card: #121218;
-  --card-foreground: var(--foreground);
-  --popover: #14141b;
-  --popover-foreground: var(--foreground);
-  --primary: #f2b341;
-  --primary-foreground: #14110a;
-  --secondary: #16161d;
-  --secondary-foreground: var(--foreground);
-  --muted: #16161d;
-  --muted-foreground: #9a9aa8;
-  --accent: #1b1b24;
-  --accent-foreground: var(--foreground);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.1);
-  --ring: rgba(242, 179, 65, 0.5);
-  --chart-1: #f2b341;
-  --chart-2: #3fae82;
-  --chart-3: #8b7fd6;
-  --chart-4: #5b8fd6;
-  --chart-5: #d66b6b;
-  --sidebar: var(--background-subtle);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--accent);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
 }
 
 @layer base {
@@ -184,18 +154,41 @@
   html {
     @apply font-sans;
   }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
 }
 
-/* ~3% opacity tiled grain — kills gradient banding, §6 */
+/*
+ * Font mandate — deliberately unlayered (not inside @layer base) and
+ * !important. Cascade layers always lose to unlayered rules regardless of
+ * specificity, so this is the one declaration in the app that nothing else
+ * can accidentally override: every page gets Lora body text and Fraunces
+ * headings, full stop, no per-component opt-out.
+ */
+html,
+body {
+  font-family: var(--font-body) !important;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display) !important;
+}
+
+/* ~3% opacity tiled grain — paper texture, kills gradient banding */
 .grain {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   opacity: 0.035;
 }
 
 /*
- * Shared hover-lift micro-interaction (§6) for clickable card-style
- * elements — a plain global class (not a CSS Module) so it can be applied
- * from any component without duplicating the rule per module.
+ * Shared hover-lift micro-interaction for clickable card-style elements —
+ * a plain global class (not a CSS Module) so it can be applied from any
+ * component without duplicating the rule per module.
  */
 .hover-lift {
   transition:
@@ -220,7 +213,7 @@
   }
 }
 
-/* Skeleton shimmer (§6) — a moving highlight sweep, not a flat pulse. */
+/* Skeleton shimmer — a moving highlight sweep, not a flat pulse. */
 @keyframes shimmer-sweep {
   0% {
     background-position: -200% 0;

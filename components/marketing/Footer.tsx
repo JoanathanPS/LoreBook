@@ -1,26 +1,27 @@
+import Image from "next/image";
 import styles from "./Footer.module.css";
 
 const COLUMNS = [
   {
-    title: "Product",
+    title: "Read",
     links: [
-      { label: "Modules", href: "#modules" },
+      { label: "Chapters", href: "#chapters" },
       { label: "How it works", href: "#how-it-works" },
     ],
   },
   {
-    title: "Modules",
+    title: "Chapters",
     links: [
-      { label: "Chat & citations", href: "#modules" },
-      { label: "Study Reels", href: "#modules" },
-      { label: "Concept graph", href: "#modules" },
+      { label: "Chat & citations", href: "#chapters" },
+      { label: "Reels", href: "#chapters" },
+      { label: "Concept graph", href: "#chapters" },
     ],
   },
   {
     title: "Account",
     links: [
       { label: "Sign in", href: "/login" },
-      { label: "Get started", href: "/login?mode=signup" },
+      { label: "Start your first chapter", href: "/login?mode=signup" },
     ],
   },
 ] as const;
@@ -46,13 +47,15 @@ export function Footer() {
           ))}
         </div>
 
-        <div className={styles.wordmark} aria-hidden="true">
-          LOREBOOK
-        </div>
-
-        <div className={styles.bottom}>
-          <span>© {year} LoreBook. A capstone project.</span>
-          <span>Built for engineering students.</span>
+        <div className={styles.colophon}>
+          <Image
+            src="/brand/lore-mark.png"
+            alt="LoreBook"
+            width={28}
+            height={35}
+            className={styles.mark}
+          />
+          <span>© {year} LoreBook — free for every classroom.</span>
         </div>
       </div>
     </footer>

@@ -30,6 +30,47 @@ export function LandingMotion() {
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
+    // Lenis owns scroll position via its own rAF loop, so the browser's
+    // native hash-jump (on load or on click) races it and leaves the page
+    // rendered at the wrong transform — a black gap above the content.
+    // Route every in-page hash link through lenis.scrollTo instead.
+    const NAV_OFFSET = -72;
+
+    const onAnchorClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href^="#"]');
+      if (!anchor) return;
+      const id = anchor.getAttribute("href");
+      if (!id || id === "#" || !document.querySelector(id)) return;
+      e.preventDefault();
+      lenis.scrollTo(id, { offset: NAV_OFFSET });
+    };
+    document.addEventListener("click", onAnchorClick);
+
+    let loadListener: (() => void) | null = null;
+    let jumpTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    if (window.location.hash && document.querySelector(window.location.hash)) {
+      // The browser already did its own native jump-to-fragment before this
+      // effect ran, which Lenis knows nothing about — reset to a known
+      // scroll position first so Lenis's target math isn't computed
+      // relative to that untracked jump.
+      if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+      window.scrollTo(0, 0);
+      const hash = window.location.hash;
+      const jump = () => {
+        jumpTimeout = setTimeout(
+          () => lenis.scrollTo(hash, { offset: NAV_OFFSET, immediate: true }),
+          50,
+        );
+      };
+      if (document.readyState === "complete") {
+        jump();
+      } else {
+        loadListener = jump;
+        window.addEventListener("load", loadListener, { once: true });
+      }
+    }
+
     const ctx = gsap.context(() => {
       const headline = document.querySelector('[data-anim="headline"]');
       if (headline) {
@@ -82,6 +123,9 @@ export function LandingMotion() {
     });
 
     return () => {
+      document.removeEventListener("click", onAnchorClick);
+      if (loadListener) window.removeEventListener("load", loadListener);
+      if (jumpTimeout) clearTimeout(jumpTimeout);
       ctx.revert();
       gsap.ticker.remove(raf);
       lenis.destroy();
