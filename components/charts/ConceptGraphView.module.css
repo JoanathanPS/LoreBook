@@ -20,7 +20,8 @@
 }
 
 .title {
-  font-size: 1.35rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
   font-weight: 600;
   color: var(--foreground);
 }
@@ -52,7 +53,7 @@
 }
 
 .panel {
-  border-left: 1px solid var(--glass-border);
+  border-left: 1px solid var(--border);
   padding: 1.5rem;
   display: grid;
   gap: 0.75rem;

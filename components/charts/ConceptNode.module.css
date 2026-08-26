@@ -1,0 +1,33 @@
+.node {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--radius-4xl);
+  border: 2px solid;
+  background: var(--card);
+  color: var(--foreground);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--shadow-glass);
+}
+
+.node[data-inspected="true"] {
+  background: var(--secondary);
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--primary);
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.handle {
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  border: none;
+  background: transparent;
+}

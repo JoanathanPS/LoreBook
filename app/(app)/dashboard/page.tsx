@@ -64,7 +64,7 @@ export default async function DashboardPage() {
       <div className={styles.wrap}>
         <header className={styles.header}>
           <div className={styles.headerInner}>
-            <Link href="/" className={styles.brand}>
+            <Link href="/library" className={styles.brand}>
               lore.book
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>

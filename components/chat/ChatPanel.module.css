@@ -4,6 +4,15 @@
   grid-template-columns: 18rem 1fr;
 }
 
+/* Tutor mode gets its own accent — gilt/scholarly gold instead of the
+ * usual oxblood — so the whole panel visibly shifts register while it's
+ * quizzing you, not just the toggle button. */
+.wrap[data-tutor="true"] {
+  --primary: var(--gilt);
+  --primary-foreground: #2b2210;
+  --ring: rgba(160, 124, 62, 0.45);
+}
+
 @media (max-width: 800px) {
   .wrap {
     grid-template-columns: 1fr;
@@ -171,6 +180,17 @@
   color: var(--primary-foreground);
   background: var(--primary);
   border-color: var(--primary);
+}
+
+.inlineCitation {
+  font-size: 0.75em;
+  color: var(--primary);
+  vertical-align: super;
+  text-decoration: none;
+}
+
+.inlineCitation:hover {
+  text-decoration: underline;
 }
 
 .citations {

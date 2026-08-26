@@ -33,6 +33,12 @@ const flashcardsSchema = z.object({
   cards: z
     .array(
       z.object({
+        topic: z
+          .string()
+          .max(40)
+          .describe(
+            "A short 2-4 word topic this card belongs to, e.g. 'Entropy' or 'Newton's Laws' — used to group cards together, so reuse the exact same topic string for every card on that topic.",
+          ),
         front: z
           .string()
           .max(140)
@@ -50,7 +56,7 @@ export async function generateFlashcards(
   context: string,
   count = 12,
   focusConcepts?: string[],
-): Promise<Array<{ front: string; back: string }>> {
+): Promise<Array<{ topic: string; front: string; back: string }>> {
   const focusInstruction = focusConcepts?.length
     ? `\n\nPRIORITIZE these specific concepts — they're the ones most likely to be tested and least understood so far, so most/all cards should target them directly: ${focusConcepts.join(", ")}.`
     : "";

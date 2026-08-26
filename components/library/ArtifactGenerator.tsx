@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { artifactHref } from "@/lib/study/artifact-links";
 import styles from "./ArtifactGenerator.module.css";
 
 const KINDS = [
@@ -37,7 +38,7 @@ export function ArtifactGenerator({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Generation failed");
-      router.refresh();
+      router.push(artifactHref(kind, json.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

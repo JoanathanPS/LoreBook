@@ -60,6 +60,7 @@
 
 .courseCard {
   border: 1px solid var(--border);
+  border-left-width: 3px;
   padding: 1.75rem;
   display: grid;
   gap: 1.25rem;

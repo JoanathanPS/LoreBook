@@ -6,15 +6,25 @@ interface ListLine {
   content: string;
 }
 
-/** Minimal markdown renderer: headings, nested/ordered lists, bold — enough for AI-generated study text. */
-export function SimpleMarkdown({ text }: { text: string }) {
+type CitationRenderer = (index: number) => React.ReactNode;
+
+/** Minimal markdown renderer: headings, nested/ordered lists, bold, italic,
+ * and (optionally) inline [n] citation markers — enough for AI-generated
+ * study text and chat replies. */
+export function SimpleMarkdown({
+  text,
+  renderCitation,
+}: {
+  text: string;
+  renderCitation?: CitationRenderer;
+}) {
   const lines = text.split("\n");
   const blocks: React.ReactNode[] = [];
   let listBuffer: ListLine[] = [];
 
   function flushList() {
     if (listBuffer.length === 0) return;
-    const [node] = renderListLevel(listBuffer, 0, listBuffer[0].indent);
+    const [node] = renderListLevel(listBuffer, 0, listBuffer[0].indent, renderCitation);
     blocks.push(<div key={`list-${blocks.length}`}>{node}</div>);
     listBuffer = [];
   }
@@ -36,13 +46,13 @@ export function SimpleMarkdown({ text }: { text: string }) {
     flushList();
 
     if (line.startsWith("### ")) {
-      blocks.push(<h3 key={blocks.length}>{renderInline(line.slice(4))}</h3>);
+      blocks.push(<h3 key={blocks.length}>{renderInline(line.slice(4), renderCitation)}</h3>);
     } else if (line.startsWith("## ")) {
-      blocks.push(<h2 key={blocks.length}>{renderInline(line.slice(3))}</h2>);
+      blocks.push(<h2 key={blocks.length}>{renderInline(line.slice(3), renderCitation)}</h2>);
     } else if (line.startsWith("# ")) {
-      blocks.push(<h1 key={blocks.length}>{renderInline(line.slice(2))}</h1>);
+      blocks.push(<h1 key={blocks.length}>{renderInline(line.slice(2), renderCitation)}</h1>);
     } else if (line.trim().length > 0) {
-      blocks.push(<p key={blocks.length}>{renderInline(line)}</p>);
+      blocks.push(<p key={blocks.length}>{renderInline(line, renderCitation)}</p>);
     }
   }
   flushList();
@@ -55,6 +65,7 @@ function renderListLevel(
   lines: ListLine[],
   start: number,
   level: number,
+  renderCitation: CitationRenderer | undefined,
 ): [React.ReactNode, number] {
   const items: React.ReactNode[] = [];
   const ordered = lines[start]?.ordered ?? false;
@@ -66,14 +77,14 @@ function renderListLevel(
 
     let children: React.ReactNode = null;
     if (i < lines.length && lines[i].indent > level) {
-      const [childNode, next] = renderListLevel(lines, i, lines[i].indent);
+      const [childNode, next] = renderListLevel(lines, i, lines[i].indent, renderCitation);
       children = childNode;
       i = next;
     }
 
     items.push(
       <li key={items.length}>
-        {renderInline(line.content)}
+        {renderInline(line.content, renderCitation)}
         {children}
       </li>,
     );
@@ -88,13 +99,21 @@ function renderListLevel(
   ];
 }
 
-function renderInline(text: string): React.ReactNode[] {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") ? (
-      <strong key={i}>{part.slice(2, -2)}</strong>
-    ) : (
-      <span key={i}>{part}</span>
-    ),
-  );
+const INLINE_TOKEN = /(\*\*[^*]+\*\*|\*[^*\n]+\*|\[\d+\])/g;
+
+function renderInline(text: string, renderCitation: CitationRenderer | undefined): React.ReactNode[] {
+  const parts = text.split(INLINE_TOKEN);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    const citationMatch = /^\[(\d+)\]$/.exec(part);
+    if (citationMatch && renderCitation) {
+      return <span key={i}>{renderCitation(Number(citationMatch[1]))}</span>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    return <span key={i}>{part}</span>;
+  });
 }

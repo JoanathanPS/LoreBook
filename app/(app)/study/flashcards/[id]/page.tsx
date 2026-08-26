@@ -25,7 +25,7 @@ export default async function FlashcardsPage({
 
   const { data: cards } = await supabase
     .from("flashcards")
-    .select("id, front, back")
+    .select("id, topic, front, back")
     .eq("deck_id", id)
     .order("due_at", { ascending: true });
 

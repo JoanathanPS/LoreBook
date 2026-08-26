@@ -1,17 +1,59 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import * as d3 from "d3";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  type NodeTypes,
+  type Node as RFNode,
+  type Edge as RFEdge,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import type { GraphEdge, GraphNode } from "./types";
+import { ConceptNode, type ConceptFlowNode, type ConceptNodeData } from "./ConceptNode";
+import { masteryColor } from "@/lib/study/mastery-color";
 import styles from "./ConceptGraph.module.css";
 
-interface SimNode extends GraphNode, d3.SimulationNodeDatum {}
+const nodeTypes: NodeTypes = { concept: ConceptNode };
+
+interface SimNode extends d3.SimulationNodeDatum {
+  id: string;
+}
 type SimLink = d3.SimulationLinkDatum<SimNode>;
 
-// mastery 0 -> danger red, 0.5 -> amber, 1 -> mastered green.
-function masteryColor(m: number): string {
-  if (m < 0.5) return d3.interpolateRgb("#d66b6b", "#f2b341")(m / 0.5);
-  return d3.interpolateRgb("#f2b341", "#3fae82")((m - 0.5) / 0.5);
+/** Runs a force simulation to completion (no live rendering) purely to get
+ * a reasonable initial layout — react-flow owns all actual interaction
+ * (drag/pan/zoom) from there. */
+function layout(nodes: GraphNode[], edges: GraphEdge[]): Map<string, { x: number; y: number }> {
+  const simNodes: SimNode[] = nodes.map((n) => ({ id: n.id }));
+  const simLinks: SimLink[] = edges.map((e) => ({ source: e.source, target: e.target }));
+
+  const simulation = d3
+    .forceSimulation(simNodes)
+    .force(
+      "link",
+      d3
+        .forceLink<SimNode, SimLink>(simLinks)
+        .id((d) => d.id)
+        .distance(150)
+        .strength(0.3),
+    )
+    .force("charge", d3.forceManyBody().strength(-350))
+    .force("center", d3.forceCenter(0, 0))
+    .force(
+      "collide",
+      d3.forceCollide<SimNode>(70),
+    )
+    .stop();
+
+  for (let i = 0; i < 300; i++) simulation.tick();
+
+  const positions = new Map<string, { x: number; y: number }>();
+  for (const n of simNodes) positions.set(n.id, { x: n.x ?? 0, y: n.y ?? 0 });
+  return positions;
 }
 
 export function ConceptGraph({
@@ -25,107 +67,60 @@ export function ConceptGraph({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const positions = useMemo(() => layout(nodes, edges), [nodes, edges]);
 
-  useEffect(() => {
-    if (!svgRef.current || !containerRef.current || nodes.length === 0) return;
+  const rfNodes: ConceptFlowNode[] = useMemo(
+    () =>
+      nodes.map((n) => ({
+        id: n.id,
+        type: "concept",
+        position: positions.get(n.id) ?? { x: 0, y: 0 },
+        data: {
+          name: n.name,
+          mastery: n.mastery,
+          importance: n.importance,
+          isInspected: n.id === selectedId,
+        },
+      })),
+    [nodes, positions, selectedId],
+  );
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
+  const rfEdges: RFEdge[] = useMemo(
+    () =>
+      edges.map((e) => ({
+        id: `${e.source}-${e.target}`,
+        source: e.source,
+        target: e.target,
+        type: "smoothstep",
+        style: { stroke: "var(--border)" },
+      })),
+    [edges],
+  );
 
-    const simNodes: SimNode[] = nodes.map((n) => ({ ...n }));
-    const simLinks: SimLink[] = edges.map((e) => ({ source: e.source, target: e.target }));
-
-    const svg = d3.select(svgRef.current).attr("viewBox", `0 0 ${width} ${height}`);
-    svg.selectAll("*").remove();
-
-    const simulation = d3
-      .forceSimulation(simNodes)
-      .force(
-        "link",
-        d3
-          .forceLink<SimNode, SimLink>(simLinks)
-          .id((d) => d.id)
-          .distance(90)
-          .strength(0.3),
-      )
-      .force("charge", d3.forceManyBody().strength(-220))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force(
-        "collide",
-        d3.forceCollide<SimNode>((d) => 14 + d.importance * 3),
-      );
-
-    const link = svg
-      .append("g")
-      .attr("stroke", "rgba(255,255,255,0.12)")
-      .selectAll("line")
-      .data(simLinks)
-      .join("line")
-      .attr("stroke-width", 1);
-
-    const node = svg
-      .append("g")
-      .selectAll<SVGGElement, SimNode>("g")
-      .data(simNodes)
-      .join("g")
-      .attr("class", styles.node)
-      .style("cursor", "pointer")
-      .on("click", (_event, d) => onSelect(d.id))
-      .call(
-        d3
-          .drag<SVGGElement, SimNode>()
-          .on("start", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-          })
-          .on("drag", (event, d) => {
-            d.fx = event.x;
-            d.fy = event.y;
-          })
-          .on("end", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-          }),
-      );
-
-    node
-      .append("circle")
-      .attr("r", (d) => 8 + d.importance * 3)
-      .attr("fill", (d) => masteryColor(d.mastery))
-      .attr("stroke", (d) => (d.id === selectedId ? "#fff" : "rgba(255,255,255,0.3)"))
-      .attr("stroke-width", (d) => (d.id === selectedId ? 2 : 1));
-
-    node
-      .append("text")
-      .text((d) => d.name)
-      .attr("x", (d) => 12 + d.importance * 3)
-      .attr("y", 4)
-      .attr("fill", "rgba(255,255,255,0.85)")
-      .attr("font-size", 11)
-      .attr("font-family", "var(--font-sans)");
-
-    simulation.on("tick", () => {
-      link
-        .attr("x1", (d) => (d.source as SimNode).x ?? 0)
-        .attr("y1", (d) => (d.source as SimNode).y ?? 0)
-        .attr("x2", (d) => (d.target as SimNode).x ?? 0)
-        .attr("y2", (d) => (d.target as SimNode).y ?? 0);
-
-      node.attr("transform", (d) => `translate(${d.x ?? 0}, ${d.y ?? 0})`);
-    });
-
-    return () => {
-      simulation.stop();
-    };
-  }, [nodes, edges, selectedId, onSelect]);
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: RFNode) => onSelect(node.id),
+    [onSelect],
+  );
 
   return (
-    <div ref={containerRef} className={styles.container}>
-      <svg ref={svgRef} className={styles.svg} />
+    <div className={styles.container}>
+      <ReactFlow
+        nodes={rfNodes}
+        edges={rfEdges}
+        nodeTypes={nodeTypes}
+        onNodeClick={handleNodeClick}
+        fitView
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background gap={22} size={1} color="rgba(38, 49, 64, 0.16)" />
+        <Controls showInteractive={false} />
+        <MiniMap
+          nodeColor={(n) => masteryColor((n.data as ConceptNodeData).mastery ?? 0.5)}
+          maskColor="rgba(243, 236, 218, 0.65)"
+          bgColor="#ede3cb"
+          className={styles.minimap}
+        />
+      </ReactFlow>
     </div>
   );
 }

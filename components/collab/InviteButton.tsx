@@ -54,7 +54,7 @@ export function InviteButton({ courseId }: { courseId: string }) {
         <UserPlus size={14} />
         Invite
       </Button>
-      <DialogContent>
+      <DialogContent className="w-full max-w-md">
         <DialogHeader>
           <DialogTitle>Invite to this course</DialogTitle>
           <DialogDescription>
@@ -64,8 +64,8 @@ export function InviteButton({ courseId }: { courseId: string }) {
         </DialogHeader>
         {loading && <p className={styles.hint}>Generating link…</p>}
         {link && (
-          <div className={styles.linkRow}>
-            <span className={styles.link}>{link}</span>
+          <div className={`${styles.linkRow} min-w-0`}>
+            <span className={`${styles.link} break-all`}>{link}</span>
             <Button type="button" size="icon-sm" variant="outline" onClick={copyLink}>
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </Button>

@@ -1,15 +1,15 @@
 .wrap {
   min-height: 100dvh;
-  padding: 2.5rem 1.5rem;
+  padding: 2.5rem 1.5rem 4rem;
   display: grid;
   justify-items: center;
   align-content: start;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .header {
   width: 100%;
-  max-width: 32rem;
+  max-width: 64rem;
   display: grid;
   gap: 0.5rem;
 }
@@ -24,21 +24,73 @@
 }
 
 .title {
-  font-size: 1.35rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
   font-weight: 600;
   color: var(--foreground);
 }
 
-.progress {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+.hint {
+  font-size: 0.875rem;
   color: var(--muted-foreground);
+  max-width: 34rem;
+}
+
+.progress {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gilt);
+}
+
+.topics {
+  width: 100%;
+  max-width: 64rem;
+  display: grid;
+  gap: 2.5rem;
+}
+
+.topicSection {
+  display: grid;
+  gap: 1rem;
+}
+
+.topicTitle {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--primary);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 1.75rem;
+}
+
+.cardSlot {
+  width: 16rem;
+  display: grid;
+  gap: 0.6rem;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform var(--duration-base) var(--ease-out-expo);
+}
+
+.cardSlot:hover {
+  transform: rotate(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardSlot {
+    transition: none;
+  }
 }
 
 .flipScene {
   width: 100%;
-  max-width: 32rem;
-  min-height: 14rem;
+  height: 11rem;
   perspective: 1200px;
   cursor: pointer;
   background: none;
@@ -53,63 +105,63 @@
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 14rem;
   transform-style: preserve-3d;
 }
 
-.card {
-  width: 100%;
-  max-width: 32rem;
-  min-height: 14rem;
-  border-radius: var(--radius-2xl);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  padding: 2.5rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: var(--foreground);
-  cursor: pointer;
-}
-
-.cardFace {
+.face {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-glass);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--foreground);
 }
 
-.cardBack {
+.faceBack {
   transform: rotateY(180deg);
+  background: var(--secondary);
 }
 
 .side {
-  font-family: var(--font-mono);
   font-size: 0.6875rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--muted-foreground);
+  color: var(--gilt);
   display: block;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .grades {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
-  width: 100%;
-  max-width: 32rem;
+  gap: 0.4rem;
+}
+
+.doneWrap {
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+  max-width: 30rem;
+  text-align: center;
+  padding-top: 2rem;
 }
 
 .done,
-.pending,
 .error {
   color: var(--muted-foreground);
-  font-size: 0.9rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
 }
 
 .error {
-  color: var(--chart-5);
+  color: var(--destructive);
 }

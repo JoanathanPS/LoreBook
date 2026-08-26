@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SimpleMarkdown } from "@/components/study/SimpleMarkdown";
 import type { ChatSource } from "@/app/api/chat/route";
 import styles from "./ChatPanel.module.css";
 
@@ -46,6 +47,18 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | null {
 
 function formatTimestamp(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+}
+
+function citationHref(s: ChatSource): string {
+  if (s.timestampRef !== null) return `/document/${s.documentId}?t=${Math.floor(s.timestampRef)}`;
+  if (s.pageRef !== null) return `/document/${s.documentId}?page=${s.pageRef}`;
+  return `/document/${s.documentId}`;
+}
+
+function citationLabel(s: ChatSource): string {
+  if (s.timestampRef !== null) return `${s.documentTitle} · ${formatTimestamp(s.timestampRef)}`;
+  if (s.pageRef !== null) return `${s.documentTitle}, p. ${s.pageRef}`;
+  return s.documentTitle;
 }
 
 const RATES = [0.75, 1, 1.25, 1.5] as const;
@@ -141,7 +154,14 @@ export function ChatPanel({
   }, []);
 
   function toggleTutorMode() {
-    setTutorMode((v) => !v);
+    const turningOn = !tutorMode;
+    setTutorMode(turningOn);
+    if (turningOn) {
+      sendMessage(
+        { text: "Start tutoring me on this material." },
+        { body: { courseId, tutorMode: true } },
+      );
+    }
   }
 
   function toggleListening() {
@@ -224,7 +244,7 @@ export function ChatPanel({
   }
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} data-tutor={tutorMode}>
       <aside className={styles.sidebar}>
         <Link href="/library" className={styles.backLink}>
           ← Back to library
@@ -295,10 +315,32 @@ export function ChatPanel({
               .map((part) => (part as { text: string }).text)
               .join("");
 
+            const sourceByIndex = new Map((sources ?? []).map((s) => [s.index, s]));
+
             return (
               <div key={message.id} className={styles.messageRow} data-role={message.role}>
                 <div className={styles.bubble} data-role={message.role}>
-                  <div className={styles.bubbleText}>{text}</div>
+                  {message.role === "assistant" ? (
+                    <SimpleMarkdown
+                      text={text}
+                      renderCitation={(n) => {
+                        const s = sourceByIndex.get(n);
+                        if (!s) return `[${n}]`;
+                        return (
+                          <Link
+                            href={citationHref(s)}
+                            className={styles.inlineCitation}
+                            target="_blank"
+                            title={citationLabel(s)}
+                          >
+                            [{n}]
+                          </Link>
+                        );
+                      }}
+                    />
+                  ) : (
+                    <div className={styles.bubbleText}>{text}</div>
+                  )}
 
                   {message.role === "assistant" && text.trim() && (
                     <SpeechControls
@@ -314,36 +356,16 @@ export function ChatPanel({
 
                   {sources && sources.length > 0 && (
                     <div className={styles.citations}>
-                      {sources.map((s) =>
-                        s.timestampRef !== null ? (
-                          <Link
-                            key={s.index}
-                            href={`/document/${s.documentId}?t=${Math.floor(s.timestampRef)}`}
-                            className={styles.citationChip}
-                            target="_blank"
-                          >
-                            [{s.index}] {s.documentTitle} · {formatTimestamp(s.timestampRef)}
-                          </Link>
-                        ) : s.pageRef !== null ? (
-                          <Link
-                            key={s.index}
-                            href={`/document/${s.documentId}?page=${s.pageRef}`}
-                            className={styles.citationChip}
-                            target="_blank"
-                          >
-                            [{s.index}] {s.documentTitle}, p. {s.pageRef}
-                          </Link>
-                        ) : (
-                          <Link
-                            key={s.index}
-                            href={`/document/${s.documentId}`}
-                            className={styles.citationChip}
-                            target="_blank"
-                          >
-                            [{s.index}] {s.documentTitle}
-                          </Link>
-                        ),
-                      )}
+                      {sources.map((s) => (
+                        <Link
+                          key={s.index}
+                          href={citationHref(s)}
+                          className={styles.citationChip}
+                          target="_blank"
+                        >
+                          [{s.index}] {citationLabel(s)}
+                        </Link>
+                      ))}
                     </div>
                   )}
                 </div>

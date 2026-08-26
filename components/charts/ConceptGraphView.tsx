@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ConceptGraph } from "./ConceptGraph";
 import type { ArtifactRef, GraphEdge, GraphNode } from "./types";
 import { artifactHref } from "@/lib/study/artifact-links";
+import { masteryColor, MASTERY_STOPS } from "@/lib/study/mastery-color";
 import styles from "./ConceptGraphView.module.css";
 
 export function ConceptGraphView({
@@ -34,15 +35,15 @@ export function ConceptGraphView({
         <h1 className={styles.title}>{courseName} — concept graph</h1>
         <div className={styles.legend}>
           <span>
-            <span className={styles.legendDot} style={{ background: "#d66b6b" }} />
+            <span className={styles.legendDot} style={{ background: MASTERY_STOPS.low }} />
             Needs work
           </span>
           <span>
-            <span className={styles.legendDot} style={{ background: "#f2b341" }} />
+            <span className={styles.legendDot} style={{ background: MASTERY_STOPS.mid }} />
             Developing
           </span>
           <span>
-            <span className={styles.legendDot} style={{ background: "#3fae82" }} />
+            <span className={styles.legendDot} style={{ background: MASTERY_STOPS.high }} />
             Mastered
           </span>
         </div>
@@ -68,8 +69,7 @@ export function ConceptGraphView({
                   className={styles.masteryFill}
                   style={{
                     width: `${Math.round(selected.mastery * 100)}%`,
-                    background:
-                      selected.mastery < 0.4 ? "#d66b6b" : selected.mastery < 0.7 ? "#f2b341" : "#3fae82",
+                    background: masteryColor(selected.mastery),
                   }}
                 />
               </div>

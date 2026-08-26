@@ -13,7 +13,9 @@ import { ArtifactGenerator } from "@/components/library/ArtifactGenerator";
 import { CommandPaletteTrigger } from "@/components/command/CommandPaletteTrigger";
 import { SoundToggle } from "@/components/audio/SoundToggle";
 import { InviteButton } from "@/components/collab/InviteButton";
+import { DeleteCourseButton } from "@/components/library/DeleteCourseButton";
 import { artifactHref } from "@/lib/study/artifact-links";
+import { courseAccent } from "@/lib/study/course-accent";
 import styles from "./page.module.css";
 
 interface DocumentRow {
@@ -68,7 +70,7 @@ export default async function LibraryPage() {
       <div className={styles.wrap}>
         <header className={styles.header}>
           <div className={styles.headerInner}>
-            <Link href="/" className={styles.brand}>
+            <Link href="dashboard" className={styles.brand}>
               lore.book
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -112,7 +114,11 @@ export default async function LibraryPage() {
               {courses.map((course) => {
                 const isOwner = course.user_id === user.id;
                 return (
-                <div key={course.id} className={styles.courseCard}>
+                <div
+                  key={course.id}
+                  className={styles.courseCard}
+                  style={{ borderLeftColor: courseAccent(course.id) }}
+                >
                   <div className={styles.courseHeader}>
                     <div className={styles.courseName}>
                       {course.name}
@@ -147,6 +153,9 @@ export default async function LibraryPage() {
                         Predict
                       </Button>
                       {isOwner && <InviteButton courseId={course.id} />}
+                      {isOwner && (
+                        <DeleteCourseButton courseId={course.id} courseName={course.name} />
+                      )}
                     </div>
                   </div>
 

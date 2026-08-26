@@ -39,6 +39,7 @@ export async function generateDrillDeck(params: {
       cards.map((c) => ({
         deck_id: artifact.id,
         user_id: user.id,
+        topic: c.topic,
         front: c.front,
         back: c.back,
       })),
