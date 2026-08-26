@@ -41,3 +41,9 @@
 .list ol {
   list-style: decimal;
 }
+
+.rule {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.5rem 0;
+}

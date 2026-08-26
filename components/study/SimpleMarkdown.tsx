@@ -1,3 +1,4 @@
+import { MathTex } from "./MathTex";
 import styles from "./SimpleMarkdown.module.css";
 
 interface ListLine {
@@ -45,7 +46,9 @@ export function SimpleMarkdown({
     }
     flushList();
 
-    if (line.startsWith("### ")) {
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
+      blocks.push(<hr key={blocks.length} className={styles.rule} />);
+    } else if (line.startsWith("### ")) {
       blocks.push(<h3 key={blocks.length}>{renderInline(line.slice(4), renderCitation)}</h3>);
     } else if (line.startsWith("## ")) {
       blocks.push(<h2 key={blocks.length}>{renderInline(line.slice(3), renderCitation)}</h2>);
@@ -99,11 +102,21 @@ function renderListLevel(
   ];
 }
 
-const INLINE_TOKEN = /(\*\*[^*]+\*\*|\*[^*\n]+\*|\[\d+\])/g;
+// LaTeX delimiters (\(...\) inline, \[...\]) display) come straight from
+// the model's own math notation — matched before the plainer markdown
+// tokens so a literal "[" inside e.g. \[a, b\] can't be mistaken for one.
+const INLINE_TOKEN =
+  /(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\*\*[^*]+\*\*|\*[^*\n]+\*|\[\d+\])/g;
 
 function renderInline(text: string, renderCitation: CitationRenderer | undefined): React.ReactNode[] {
   const parts = text.split(INLINE_TOKEN);
   return parts.map((part, i) => {
+    if (part.startsWith("\\[") && part.endsWith("\\]")) {
+      return <MathTex key={i} tex={part.slice(2, -2)} display />;
+    }
+    if (part.startsWith("\\(") && part.endsWith("\\)")) {
+      return <MathTex key={i} tex={part.slice(2, -2)} display={false} />;
+    }
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={i}>{part.slice(2, -2)}</strong>;
     }
