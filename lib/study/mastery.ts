@@ -29,7 +29,25 @@ export async function nudgeMastery(
   await supabase.from("mastery_scores").upsert(rows, { onConflict: "user_id,concept_id" });
 }
 
-/** Finds or creates concepts by name for a course, returning their ids. */
+/**
+ * Concept names come from independent LLM calls (one per artifact
+ * generation), so the same idea often comes back phrased slightly
+ * differently across calls — "Diffusion Model" vs "Diffusion Models",
+ * different casing, extra whitespace. Matching on the exact string (as this
+ * used to) mints a fresh near-duplicate node in the concept graph every
+ * time. Normalize before matching so those collapse onto one row.
+ */
+function normalizeConceptKey(name: string): string {
+  const norm = name.trim().toLowerCase().replace(/\s+/g, " ");
+  // Strip a simple trailing plural "s" — but not for words that are already
+  // "singular-looking" with a trailing s (glass, virus, axis, ...).
+  if (norm.length > 3 && /s$/.test(norm) && !/(ss|us|is)$/.test(norm)) {
+    return norm.slice(0, -1);
+  }
+  return norm;
+}
+
+/** Finds or creates concepts by name for a course, returning their ids (deduped). */
 async function resolveConceptIds(
   supabase: SupabaseClient,
   userId: string,
@@ -38,20 +56,52 @@ async function resolveConceptIds(
 ): Promise<string[]> {
   if (names.length === 0) return [];
 
-  await supabase
-    .from("concepts")
-    .upsert(
-      names.map((name) => ({ course_id: courseId, user_id: userId, name })),
-      { onConflict: "course_id,name", ignoreDuplicates: true },
-    );
-
-  const { data: concepts } = await supabase
+  const { data: existing } = await supabase
     .from("concepts")
     .select("id, name")
-    .eq("course_id", courseId)
-    .in("name", names);
+    .eq("course_id", courseId);
 
-  return (concepts ?? []).map((c) => c.id);
+  const byKey = new Map<string, { id: string }>();
+  for (const c of existing ?? []) byKey.set(normalizeConceptKey(c.name), c);
+
+  const toInsert: string[] = [];
+  const seenNewKeys = new Set<string>();
+  for (const name of names) {
+    const key = normalizeConceptKey(name);
+    if (!byKey.has(key) && !seenNewKeys.has(key)) {
+      seenNewKeys.add(key);
+      toInsert.push(name);
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const { data: inserted } = await supabase
+      .from("concepts")
+      .upsert(
+        toInsert.map((name) => ({ course_id: courseId, user_id: userId, name })),
+        { onConflict: "course_id,name", ignoreDuplicates: true },
+      )
+      .select("id, name");
+    for (const c of inserted ?? []) byKey.set(normalizeConceptKey(c.name), c);
+
+    // `ignoreDuplicates` upserts don't reliably return the rows they
+    // skipped (a concurrent insert can race this same call) — re-fetch
+    // anything still missing rather than silently dropping it.
+    const stillMissing = toInsert.filter((n) => !byKey.has(normalizeConceptKey(n)));
+    if (stillMissing.length > 0) {
+      const { data: refetched } = await supabase
+        .from("concepts")
+        .select("id, name")
+        .eq("course_id", courseId)
+        .in("name", stillMissing);
+      for (const c of refetched ?? []) byKey.set(normalizeConceptKey(c.name), c);
+    }
+  }
+
+  const ids = names
+    .map((name) => byKey.get(normalizeConceptKey(name))?.id)
+    .filter((id): id is string => !!id);
+  return Array.from(new Set(ids));
 }
 
 /** Finds or creates concepts by name for a course, linking them to the given artifact. */
