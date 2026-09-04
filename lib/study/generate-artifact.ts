@@ -53,7 +53,7 @@ export async function generateArtifact(params: {
         .eq("id", artifact.id);
     } else if (params.kind === "flashcard_deck") {
       const cards = await generateFlashcards(context);
-      let { error: insertCardsError } = await supabase.from("flashcards").insert(
+      const { error: insertCardsError } = await supabase.from("flashcards").insert(
         cards.map((c) => ({
           deck_id: artifact.id,
           user_id: user.id,

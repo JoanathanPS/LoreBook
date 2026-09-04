@@ -35,7 +35,7 @@ export async function generateDrillDeck(params: {
 
     const cards = await generateFlashcards(context, 15, params.focusConcepts);
 
-    let { error: insertCardsError } = await supabase.from("flashcards").insert(
+    const { error: insertCardsError } = await supabase.from("flashcards").insert(
       cards.map((c) => ({
         deck_id: artifact.id,
         user_id: user.id,
