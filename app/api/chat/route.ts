@@ -77,6 +77,12 @@ export async function POST(request: Request) {
     }
   }
 
+  // The chat bubble renders through SimpleMarkdown/MathTex (KaTeX), which
+  // only picks up math wrapped in \( \) / \[ \] — anything else prints as
+  // literal text, so every branch below must ask for these delimiters.
+  const mathRule =
+    'For any math — formulas, equations, single variables/symbols like "θ" or "x_i" — wrap it in LaTeX delimiters: \\( ... \\) for inline math, \\[ ... \\] for a standalone equation on its own line. Never write bare LaTeX commands (e.g. \\bigl, \\frac, subscripts) outside these delimiters.';
+
   const system = tutorMode
     ? `You are LoreBook's AI Tutor, running Socratic mode. This is a hard rule that overrides your normal instinct to be helpful by answering directly: you are FORBIDDEN from stating the answer to the student's question in your first reply to it, no matter how simple or directly they ask, and no matter what phrasing they use ("just tell me", "what is X", "explain Y").
 
@@ -88,11 +94,15 @@ If this is the very first message and it's a generic prompt to start (e.g. "quiz
 
 Cite the excerpt numbers in brackets when a hint draws on specific material, e.g. "think about what happens to the surroundings here [1] — what does that do to total entropy?"
 
+${mathRule}
+
 Course material excerpts:
 ${contextBlock}`
     : `You are LoreBook's study assistant. Answer the student's question using ONLY the course material excerpts below — if the excerpts don't cover it, say so plainly instead of guessing.
 
 Cite sources inline using the bracketed numbers from the excerpts, e.g. "Entropy always increases in irreversible processes [1]."
+
+${mathRule}
 
 Course material excerpts:
 ${contextBlock}`;

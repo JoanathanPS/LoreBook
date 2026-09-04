@@ -108,6 +108,19 @@ function renderListLevel(
 const INLINE_TOKEN =
   /(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\*\*[^*]+\*\*|\*[^*\n]+\*|\[\d+\])/g;
 
+/** Inline-only variant of the renderer below (math, bold, italic, citations —
+ * no block/list handling) for single-field text like a flashcard face or a
+ * quiz choice, where the caller supplies its own block-level element. */
+export function InlineMath({
+  text,
+  renderCitation,
+}: {
+  text: string;
+  renderCitation?: CitationRenderer;
+}) {
+  return <>{renderInline(text, renderCitation)}</>;
+}
+
 function renderInline(text: string, renderCitation: CitationRenderer | undefined): React.ReactNode[] {
   const parts = text.split(INLINE_TOKEN);
   return parts.map((part, i) => {

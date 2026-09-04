@@ -35,15 +35,30 @@ export async function generateDrillDeck(params: {
 
     const cards = await generateFlashcards(context, 15, params.focusConcepts);
 
-    await supabase.from("flashcards").insert(
+    let { error: insertCardsError } = await supabase.from("flashcards").insert(
       cards.map((c) => ({
         deck_id: artifact.id,
         user_id: user.id,
-        topic: c.topic,
+        topic: c.topic ?? "General",
         front: c.front,
         back: c.back,
       })),
     );
+
+    if (insertCardsError) {
+      console.warn("Flashcard drill deck insert with topic failed, trying fallback:", insertCardsError.message);
+      const { error: fallbackError } = await supabase.from("flashcards").insert(
+        cards.map((c) => ({
+          deck_id: artifact.id,
+          user_id: user.id,
+          front: c.front,
+          back: c.back,
+        })),
+      );
+      if (fallbackError) {
+        throw new Error(`Failed to save flashcards: ${fallbackError.message}`);
+      }
+    }
 
     await upsertConcepts(supabase, user.id, params.courseId, artifact.id, params.focusConcepts);
 

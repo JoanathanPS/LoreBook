@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import { toFile } from "groq-sdk";
+import { withRetry } from "./retry";
 
 let client: Groq | null = null;
 
@@ -28,12 +29,16 @@ export async function transcribeAudio(params: {
 
   const file = await toFile(params.buffer, params.filename);
 
-  const result = (await groq.audio.transcriptions.create({
-    file,
-    model: "whisper-large-v3-turbo",
-    response_format: "verbose_json",
-    timestamp_granularities: ["segment"],
-  })) as unknown as VerboseTranscription;
+  const result = await withRetry(
+    () =>
+      groq.audio.transcriptions.create({
+        file,
+        model: "whisper-large-v3-turbo",
+        response_format: "verbose_json",
+        timestamp_granularities: ["segment"],
+      }) as unknown as Promise<VerboseTranscription>,
+    { label: "Groq (transcription)" },
+  );
 
   if (result.segments?.length) {
     return result.segments.map((s) => ({ text: s.text.trim(), start: s.start, end: s.end }));
@@ -60,22 +65,26 @@ export async function describeImage(params: {
 }): Promise<string> {
   const groq = getClient();
 
-  const completion = await groq.chat.completions.create({
-    model: "meta-llama/llama-4-scout-17b-16e-instruct",
-    max_tokens: 2048,
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: VISION_PROMPT },
+  const completion = await withRetry(
+    () =>
+      groq.chat.completions.create({
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        max_tokens: 2048,
+        messages: [
           {
-            type: "image_url",
-            image_url: { url: `data:${params.mediaType};base64,${params.base64}` },
+            role: "user",
+            content: [
+              { type: "text", text: VISION_PROMPT },
+              {
+                type: "image_url",
+                image_url: { url: `data:${params.mediaType};base64,${params.base64}` },
+              },
+            ],
           },
         ],
-      },
-    ],
-  });
+      }),
+    { label: "Groq (vision)" },
+  );
 
   return completion.choices[0]?.message?.content?.trim() ?? "";
 }

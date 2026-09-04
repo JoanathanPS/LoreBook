@@ -8,6 +8,7 @@ import { RecallDeck } from "./RecallDeck";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { playSwipe } from "@/lib/audio/sounds";
+import { InlineMath } from "@/components/study/SimpleMarkdown";
 import type { RecallQuestion } from "@/lib/ai/generate";
 import styles from "./ReelPlayer.module.css";
 
@@ -203,8 +204,8 @@ export function ReelPlayer({
             onPointerCancel={() => setPaused(false)}
           >
             {current?.visual_hint && <span className={styles.visualHint}>{current.visual_hint}</span>}
-            <p className={styles.hook}>{current?.hook}</p>
-            <p className={styles.body}>{current?.body}</p>
+            <p className={styles.hook}>{current && <InlineMath text={current.hook} />}</p>
+            <p className={styles.body}>{current && <InlineMath text={current.body} />}</p>
           </motion.div>
         </AnimatePresence>
       </div>

@@ -8,7 +8,7 @@ const BATCH_SIZE = 96;
 // failing the user's message/upload outright; a real payment method
 // (billing stays free up to Voyage's 200M-token allowance) is the actual
 // fix for sustained use, this just absorbs the occasional burst.
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 
 interface VoyageResponse {
   data: Array<{ embedding: number[]; index: number }>;
@@ -40,17 +40,27 @@ async function embedBatch(
     }
 
     lastError = await res.text();
+    const retryable = res.status === 429 || res.status >= 500;
 
-    if (res.status !== 429 || attempt === MAX_RETRIES) {
-      throw new Error(`Voyage embeddings failed (${res.status}): ${lastError}`);
+    if (!retryable || attempt === MAX_RETRIES) {
+      const friendly =
+        res.status === 401 || res.status === 403
+          ? "Voyage rejected the API key — check VOYAGE_API_KEY in .env.local."
+          : res.status === 429
+            ? "Voyage embeddings are rate limited (free-tier quota). Wait a minute and try again."
+            : `Voyage embeddings failed (${res.status}): ${lastError}`;
+      throw new Error(friendly);
     }
 
     const retryAfter = Number(res.headers.get("retry-after"));
-    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 21_000;
+    const baseWaitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 21_000;
+    const waitMs = res.status === 429 ? baseWaitMs : Math.min(2000 * 2 ** attempt, 20_000);
     await sleep(waitMs);
   }
 
-  throw new Error(`Voyage embeddings failed (429): ${lastError}`);
+  throw new Error(
+    `Voyage embeddings are rate limited (free-tier quota) even after ${MAX_RETRIES} retries: ${lastError}`,
+  );
 }
 
 /** Embed chunks that will be stored and searched against later. */

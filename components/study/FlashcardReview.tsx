@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { playFlip } from "@/lib/audio/sounds";
+import { InlineMath } from "@/components/study/SimpleMarkdown";
 import type { Grade } from "@/lib/srs/sm2";
 import styles from "./FlashcardReview.module.css";
 
@@ -155,11 +156,15 @@ export function FlashcardReview({
                           >
                             <div className={styles.face}>
                               <span className={styles.side}>Question</span>
-                              <p>{card.front}</p>
+                              <p>
+                                <InlineMath text={card.front} />
+                              </p>
                             </div>
                             <div className={`${styles.face} ${styles.faceBack}`}>
                               <span className={styles.side}>Answer</span>
-                              <p>{card.back}</p>
+                              <p>
+                                <InlineMath text={card.back} />
+                              </p>
                             </div>
                           </motion.div>
                         </button>

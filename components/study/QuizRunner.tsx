@@ -7,6 +7,7 @@ import { Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { playCorrect, playIncorrect } from "@/lib/audio/sounds";
+import { InlineMath } from "@/components/study/SimpleMarkdown";
 import type { QuizQuestion } from "@/lib/ai/generate";
 import styles from "./QuizRunner.module.css";
 
@@ -108,7 +109,9 @@ export function QuizRunner({
         <div className={styles.questions}>
           {questions.map((q, qi) => (
             <div key={qi} className={styles.question}>
-              <div className={styles.prompt}>{q.prompt}</div>
+              <div className={styles.prompt}>
+                <InlineMath text={q.prompt} />
+              </div>
               <div className={styles.choices}>
                 {q.choices.map((choice, ci) => {
                   const selected = answers[qi] === ci;
@@ -127,12 +130,16 @@ export function QuizRunner({
                         setAnswers((prev) => prev.map((a, i) => (i === qi ? ci : a)))
                       }
                     >
-                      {choice}
+                      <InlineMath text={choice} />
                     </button>
                   );
                 })}
               </div>
-              {result && <p className={styles.explanation}>{q.explanation}</p>}
+              {result && (
+                <p className={styles.explanation}>
+                  <InlineMath text={q.explanation} />
+                </p>
+              )}
             </div>
           ))}
 

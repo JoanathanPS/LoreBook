@@ -53,15 +53,32 @@ export async function generateArtifact(params: {
         .eq("id", artifact.id);
     } else if (params.kind === "flashcard_deck") {
       const cards = await generateFlashcards(context);
-      await supabase.from("flashcards").insert(
+      let { error: insertCardsError } = await supabase.from("flashcards").insert(
         cards.map((c) => ({
           deck_id: artifact.id,
           user_id: user.id,
-          topic: c.topic,
+          topic: c.topic ?? "General",
           front: c.front,
           back: c.back,
         })),
       );
+
+      // If inserting with topic failed (e.g. migration 0011 not run yet), retry without topic column
+      if (insertCardsError) {
+        console.warn("Flashcard insert with topic failed, trying fallback:", insertCardsError.message);
+        const { error: fallbackError } = await supabase.from("flashcards").insert(
+          cards.map((c) => ({
+            deck_id: artifact.id,
+            user_id: user.id,
+            front: c.front,
+            back: c.back,
+          })),
+        );
+        if (fallbackError) {
+          throw new Error(`Failed to save flashcards: ${fallbackError.message}`);
+        }
+      }
+
       await supabase
         .from("study_artifacts")
         .update({ content: { cardCount: cards.length }, status: "ready" })

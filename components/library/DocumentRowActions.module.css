@@ -1,0 +1,19 @@
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.deleteIcon {
+  color: var(--destructive);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

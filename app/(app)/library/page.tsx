@@ -14,6 +14,7 @@ import { CommandPaletteTrigger } from "@/components/command/CommandPaletteTrigge
 import { SoundToggle } from "@/components/audio/SoundToggle";
 import { InviteButton } from "@/components/collab/InviteButton";
 import { DeleteCourseButton } from "@/components/library/DeleteCourseButton";
+import { DocumentRowActions } from "@/components/library/DocumentRowActions";
 import { artifactHref } from "@/lib/study/artifact-links";
 import { courseAccent } from "@/lib/study/course-accent";
 import styles from "./page.module.css";
@@ -24,6 +25,7 @@ interface DocumentRow {
   type: string;
   status: string;
   error_message: string | null;
+  user_id: string;
   document_chunks: { count: number }[];
 }
 
@@ -52,7 +54,7 @@ export default async function LibraryPage() {
   const { data: courses, error: coursesError } = await supabase
     .from("courses")
     .select(
-      "id, name, user_id, documents(id, title, type, status, error_message, document_chunks(count)), study_artifacts(id, kind, title, status)",
+      "id, name, user_id, documents(id, title, type, status, error_message, user_id, document_chunks(count)), study_artifacts(id, kind, title, status)",
     )
     .order("created_at", { ascending: true })
     .returns<CourseRow[]>();
@@ -176,6 +178,13 @@ export default async function LibraryPage() {
                             </span>
                           ) : null}
                           <DocumentStatusBadge status={doc.status} />
+                          {doc.user_id === user.id && (
+                            <DocumentRowActions
+                              documentId={doc.id}
+                              documentTitle={doc.title}
+                              status={doc.status}
+                            />
+                          )}
                         </div>
                       ))}
                     </div>

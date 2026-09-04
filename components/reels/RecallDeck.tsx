@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { playCorrect, playIncorrect } from "@/lib/audio/sounds";
+import { InlineMath } from "@/components/study/SimpleMarkdown";
 import type { RecallQuestion } from "@/lib/ai/generate";
 import styles from "./RecallDeck.module.css";
 
@@ -86,7 +87,9 @@ export function RecallDeck({
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
           >
-            <p className={styles.statement}>{current.statement}</p>
+            <p className={styles.statement}>
+              <InlineMath text={current.statement} />
+            </p>
           </motion.div>
         </AnimatePresence>
       </div>
