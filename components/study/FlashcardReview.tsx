@@ -9,6 +9,8 @@ import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { playFlip } from "@/lib/audio/sounds";
 import { InlineMath } from "@/components/study/SimpleMarkdown";
 import type { Grade } from "@/lib/srs/sm2";
+import { useRouter } from "next/navigation";
+import { Loader2, RefreshCw } from "lucide-react";
 import styles from "./FlashcardReview.module.css";
 
 interface Card {
@@ -34,27 +36,33 @@ function cardTilt(id: string): number {
 }
 
 export function FlashcardReview({
+  deckId,
   title,
   status,
   errorMessage,
   cards,
 }: {
+  deckId?: string;
   title: string;
   status: string;
   errorMessage: string | null;
   cards: Card[];
 }) {
+  const router = useRouter();
   const reducedMotion = useReducedMotion();
   const [flipped, setFlipped] = useState<Set<string>>(new Set());
   const [graded, setGraded] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   const topics = useMemo(() => {
     const map = new Map<string, Card[]>();
     for (const c of cards) {
-      const list = map.get(c.topic) ?? [];
+      const topicKey = c.topic || "General";
+      const list = map.get(topicKey) ?? [];
       list.push(c);
-      map.set(c.topic, list);
+      map.set(topicKey, list);
     }
     return Array.from(map.entries());
   }, [cards]);
@@ -84,6 +92,25 @@ export function FlashcardReview({
     }
   }
 
+  async function handleRegenerate() {
+    if (!deckId || regenerating) return;
+    setRegenerating(true);
+    setRegenerateError(null);
+    try {
+      const res = await fetch(`/api/flashcards/${deckId}/regenerate`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to regenerate flashcards");
+      router.refresh();
+      window.location.reload();
+    } catch (err) {
+      setRegenerateError(err instanceof Error ? err.message : "Regeneration failed");
+    } finally {
+      setRegenerating(false);
+    }
+  }
+
   const allGraded = cards.length > 0 && graded.size === cards.length;
 
   return (
@@ -106,16 +133,44 @@ export function FlashcardReview({
         )}
       </div>
 
-      {status === "generating" && (
+      {(status === "generating" || regenerating) && (
         <div className={styles.board} style={{ maxWidth: "64rem" }}>
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} style={{ width: "16rem", height: "11rem", borderRadius: "var(--radius-lg)" }} />
           ))}
         </div>
       )}
-      {status === "error" && <p className={styles.error}>{errorMessage}</p>}
-      {status === "ready" && cards.length === 0 && (
-        <p className={styles.done}>This deck has no cards.</p>
+      {status === "error" && !regenerating && (
+        <div className={styles.doneWrap}>
+          <p className={styles.error}>{errorMessage ?? "Failed to generate deck."}</p>
+          {deckId && (
+            <Button onClick={handleRegenerate} disabled={regenerating}>
+              <RefreshCw size={14} className={regenerating ? "animate-spin mr-1.5" : "mr-1.5"} />
+              Try Again
+            </Button>
+          )}
+        </div>
+      )}
+      {status === "ready" && cards.length === 0 && !regenerating && (
+        <div className={styles.doneWrap}>
+          <p className={styles.done}>This deck has no cards.</p>
+          {regenerateError && <p className={styles.error}>{regenerateError}</p>}
+          {deckId && (
+            <Button onClick={handleRegenerate} disabled={regenerating}>
+              {regenerating ? (
+                <>
+                  <Loader2 size={14} className="animate-spin mr-1.5" />
+                  Generating Cards...
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={14} className="mr-1.5" />
+                  Generate Cards
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       )}
 
       {status === "ready" && cards.length > 0 && !allGraded && (
