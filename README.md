@@ -1,6 +1,5 @@
-<p align="center">
-  <img src="public/brand/lore-mark.png" alt="LoreBook" width="72" />
-</p>
+<img width="2000" height="2000" alt="LoreBook Logo" src="https://github.com/user-attachments/assets/837be1e4-267f-4e13-ae65-c19d8d564352" />
+
 
 <h1 align="center">LoreBook</h1>
 
