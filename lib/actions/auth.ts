@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export type AuthState = { error: string | null };
+export type AuthState = { error: string | null; success?: string | null };
 
 export async function signIn(
   _prevState: AuthState,
@@ -39,6 +39,26 @@ export async function signUp(
 
   if (error) return { error: error.message };
   redirect("/login?confirmEmail=1");
+}
+
+export async function resendConfirmationEmail(
+  _prevState: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) return { error: "Please enter your email address." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
+    },
+  });
+
+  if (error) return { error: error.message };
+  return { error: null, success: "Verification email sent! Please check your inbox." };
 }
 
 export async function signOut() {

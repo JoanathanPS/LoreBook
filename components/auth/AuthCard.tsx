@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { signIn, signUp, type AuthState } from "@/lib/actions/auth";
+import { signIn, signUp, resendConfirmationEmail, type AuthState } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./AuthCard.module.css";
 
@@ -35,7 +35,7 @@ function GoogleIcon() {
   );
 }
 
-const initialState: AuthState = { error: null };
+const initialState: AuthState = { error: null, success: null };
 
 export function AuthCard({
   defaultMode,
@@ -48,6 +48,7 @@ export function AuthCard({
 }) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>(confirmEmail ? "resend" : defaultMode);
 
   const [signInState, signInAction, signInPending] = useActionState(
     signIn,
@@ -55,6 +56,10 @@ export function AuthCard({
   );
   const [signUpState, signUpAction, signUpPending] = useActionState(
     signUp,
+    initialState,
+  );
+  const [resendState, resendAction, resendPending] = useActionState(
+    resendConfirmationEmail,
     initialState,
   );
 
@@ -97,7 +102,7 @@ export function AuthCard({
 
         {confirmEmail && (
           <p className={styles.notice}>
-            Check your email to confirm your account before signing in.
+            Check your inbox to confirm your account, or request a new verification link below.
           </p>
         )}
 
@@ -122,13 +127,16 @@ export function AuthCard({
           <span>or continue with email</span>
         </div>
 
-        <Tabs defaultValue={defaultMode}>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full">
             <TabsTrigger value="signin" className="flex-1">
               Sign in
             </TabsTrigger>
             <TabsTrigger value="signup" className="flex-1">
               Sign up
+            </TabsTrigger>
+            <TabsTrigger value="resend" className="flex-1">
+              Resend
             </TabsTrigger>
           </TabsList>
 
@@ -192,6 +200,31 @@ export function AuthCard({
               )}
               <Button type="submit" disabled={signUpPending} className="w-full">
                 {signUpPending ? "Creating account…" : "Create account"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="resend">
+            <form action={resendAction} className={styles.form}>
+              <div className={styles.field}>
+                <Label htmlFor="resend-email">Account Email</Label>
+                <Input
+                  id="resend-email"
+                  name="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+              {resendState.error && (
+                <p className={styles.error}>{resendState.error}</p>
+              )}
+              {resendState.success && (
+                <p className={styles.success}>{resendState.success}</p>
+              )}
+              <Button type="submit" disabled={resendPending} className="w-full">
+                {resendPending ? "Sending verification email…" : "Resend Verification Email"}
               </Button>
             </form>
           </TabsContent>
