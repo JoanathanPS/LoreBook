@@ -21,6 +21,10 @@
   box-shadow: 0 4px 14px rgba(38, 49, 63, 0.14);
 }
 
+.node[data-risk="high"] {
+  background: #fffafa;
+}
+
 .node[data-root="true"] {
   background: #26313f;
   color: #ffffff;
@@ -33,7 +37,7 @@
 }
 
 .node[data-sub="true"] {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   font-size: 0.75rem;
   font-weight: 500;
   padding: 0.35rem 0.65rem;
@@ -59,8 +63,43 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
+.dot[data-pulse="true"] {
+  animation: pulseRisk 2s infinite ease-in-out;
+}
+
+@keyframes pulseRisk {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(123, 50, 50, 0.5);
+  }
+  70% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(123, 50, 50, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(123, 50, 50, 0);
+  }
+}
+
 .label {
   letter-spacing: -0.01em;
+}
+
+.riskBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.4rem;
+  background: rgba(123, 50, 50, 0.12);
+  color: var(--color-terracotta, #7b3232);
+  border: 1px solid rgba(123, 50, 50, 0.3);
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-left: 0.2rem;
 }
 
 .expandBadge {
@@ -89,12 +128,6 @@
   font-size: 0.625rem;
 }
 
-.sparkleHint {
-  display: inline-flex;
-  color: var(--color-gold, #a07c3e);
-  opacity: 0.75;
-}
-
 .handle {
   opacity: 0;
   width: 1px;
@@ -102,4 +135,3 @@
   border: none;
   background: transparent;
 }
-

@@ -37,29 +37,161 @@ function parseTableAlignments(delimiterRow: string): Array<"left" | "center" | "
   });
 }
 
+function sanitizeLatex(tex: string): string {
+  if (!tex) return "";
+  let t = tex;
+
+  // Clean unicode math characters
+  t = t
+    .replace(/·/g, " \\cdot ")
+    .replace(/ᵀ/g, "^{\\top}")
+    .replace(/[∣│]/g, " \\mid ")
+    .replace(/√/g, "\\sqrt")
+    .replace(/→/g, "\\to ")
+    .replace(/μ/g, "\\mu ")
+    .replace(/σ/g, "\\sigma ")
+    .replace(/θ/g, "\\theta ")
+    .replace(/λ/g, "\\lambda ")
+    .replace(/α/g, "\\alpha ")
+    .replace(/β/g, "\\beta ")
+    .replace(/γ/g, "\\gamma ")
+    .replace(/∈/g, "\\in ")
+    .replace(/∑/g, "\\sum ")
+    .replace(/∏/g, "\\prod ")
+    .replace(/∇/g, "\\nabla ")
+    .replace(/∂/g, "\\partial ")
+    .replace(/≤/g, "\\le ")
+    .replace(/≥/g, "\\ge ")
+    .replace(/≠/g, "\\neq ")
+    .replace(/≈/g, "\\approx ")
+    .replace(/∞/g, "\\infty ");
+
+  // Fix missing underscore in \sum and \prod: \sumt -> \sum_t, \sumi -> \sum_i, \sumn -> \sum_n, etc.
+  t = t.replace(/\\sum([a-zA-Z])(?![a-zA-Z])/g, "\\sum_$1 ");
+  t = t.replace(/\\prod([a-zA-Z])(?![a-zA-Z])/g, "\\prod_$1 ");
+
+  // Fix missing underscore in p\theta, q\phi, p\phi, p\theta -> p_\theta
+  t = t.replace(/([pqP])\\(theta|phi|psi|lambda|alpha|beta|sigma|mu)/g, "$1_\\$2");
+
+  // Fix \mu,\sigma2 -> \mu, \sigma^2 or \sigma2 -> \sigma^2
+  t = t.replace(/\\sigma\s*2\b/g, "\\sigma^2");
+
+  // Fix \log p\theta -> \log p_\theta or \logp -> \log p
+  t = t.replace(/\\log\s*([a-zA-Z])/g, "\\log $1");
+
+  // Fix (xt \mid x<t) -> (x_t \mid x_{<t})
+  t = t.replace(/\b([xXyYzZ])([tijk0-9])\b/g, "$1_$2");
+  t = t.replace(/([xXyYzZ])<([tijk0-9])/g, "$1_{<$2}");
+
+  // Fix \mathsf{T} -> {\top}
+  t = t.replace(/\\mathsf\{T\}/g, "{\\top}");
+
+  // Fix QKT or QK^T -> Q K^\top
+  t = t.replace(/\bQK\^?T\b/g, "Q K^{\\top}");
+  t = t.replace(/QK\^\{\\mathsf\{T\}\}/g, "Q K^{\\top}");
+
+  // Fix 1/dk -> \frac{1}{\sqrt{d_k}} or 1/d_k
+  t = t.replace(/\b1\/dk\b/g, "\\frac{1}{\\sqrt{d_k}}");
+
+  // Fix dmodel -> d_{\text{model}}
+  t = t.replace(/\bdmodel\b/g, "d_{\\text{model}}");
+
+  // Fix WQ, WK, WV, WO
+  t = t.replace(/\bW([QKVOD])\b/g, "W_$1");
+  t = t.replace(/\bW([QKVOD])\((\w+)\)/g, "W_$1^{($2)}");
+
+  // Fix Concat(head1,…,headh)
+  t = t.replace(/\bhead([0-9a-z])\b/g, "\\text{head}_$1");
+  t = t.replace(/\bConcat\(/g, "\\text{Concat}(");
+
+  // Fix softmax -> \operatorname{softmax}
+  t = t.replace(/\\text\{softmax\}|softmax/g, "\\operatorname{softmax}");
+
+  return t.trim();
+}
+
 function normalizeMathText(text: string): string {
   if (!text) return text;
 
-  // 1. Replace $$ ... $$ display math -> \[ ... \]
-  let out = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => `\\[${math.trim()}\\]`);
+  // 1. Convert $$ ... $$ to \[ ... \] with sanitized content
+  let out = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => `\\[${sanitizeLatex(math)}\\]`);
 
-  // 2. Clean unicode math characters
-  out = out.replace(/·/g, " \\cdot ").replace(/ᵀ/g, "^T");
+  // 2. Normalize existing \[ ... \] with sanitized content
+  out = out.replace(/\\\[([\s\S]+?)\\\]/g, (_, math) => `\\[${sanitizeLatex(math)}\\]`);
 
-  // 3. Match single dollar inline math: $...$ where not a price
+  // 3. Normalize existing \( ... \) with sanitized content
+  out = out.replace(/\\\(([\s\S]+?)\\\)/g, (_, math) => `\\(${sanitizeLatex(math)}\\)`);
+
+  // 4. Convert single dollar math $...$
   out = out.replace(/(?<![\w\\$])\$([^\s$](?:[^$\n]*?[^\s$])?)\$(?![\w$])/g, (_, math) => {
     if (/^\d+(?:\.\d+)?$/.test(math.trim())) return `$${math}$`;
-    return `\\(${math.trim()}\\)`;
+    return `\\(${sanitizeLatex(math)}\\)`;
   });
 
-  // 4. Auto-wrap bare subscript equations like Score_{i,j}=Q_i \cdot K_j^T or X_{1,2}
-  const segments = out.split(/(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\*\*[^*]+\*\*|\*[^*\n]+\*)/g);
+  // 5. Replace unicode math characters in text
+  out = out
+    .replace(/ᵀ/g, "^T")
+    .replace(/·/g, " \\cdot ");
+
+  // 6. Split by existing math/code/bold/link tokens so we don't double-wrap math inside existing tokens
+  const tokenRegex = /(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
+  const segments = out.split(tokenRegex);
+
   return segments
     .map((seg) => {
-      if (!seg || seg.startsWith("\\[") || seg.startsWith("\\(") || seg.startsWith("**") || seg.startsWith("*")) {
+      if (!seg || seg.startsWith("\\[") || seg.startsWith("\\(") || seg.startsWith("**") || seg.startsWith("`") || seg.startsWith("[")) {
         return seg;
       }
-      return seg.replace(/([A-Za-z]+_\{[^{}\n]+\}(?:[=+\-*/\s]|\\cdot|[A-Za-z0-9_^{}·+\-*/^()]+)*)/g, (m) => {
+
+      let s = seg;
+
+      // Wrap Q=XWQ, K=XWK, V=XWV, Qi=XWQ(i), Ki=XWK(i), Vi=XWV(i)
+      s = s.replace(/\b([QKV])\s*=\s*X\s*W\s*([QKVOD])(?:\((\w+)\))?/g, (_, lhs, rhs, head) => {
+        const sub = head ? `_{${rhs}}^{(${head})}` : `_${rhs}`;
+        return `\\(${lhs} = X W${sub}\\)`;
+      });
+      s = s.replace(/\b([QKV])([0-9a-z])\s*=\s*X\s*W\s*([QKVOD])(?:\((\w+)\))?/g, (_, lhs, idx, rhs, head) => {
+        const sub = head ? `_{${rhs}}^{(${head})}` : `_${rhs}`;
+        return `\\(${lhs}_${idx} = X W${sub}\\)`;
+      });
+
+      // Wrap scores=QKT or scores = QK^T
+      s = s.replace(/\bscores\s*=\s*QK\^?[Tᵀ]?\b/gi, `\\(\\text{scores} = Q K^{\\top}\\)`);
+
+      // Wrap 1/dk -> \(1/\sqrt{d_k}\)
+      s = s.replace(/\b1\/dk\b/g, `\\(\\frac{1}{\\sqrt{d_k}}\\)`);
+
+      // Wrap Probability expressions: P(y∣x), P(x,y), P(x), q(z∣x), p(z), p(x \mid y)
+      s = s.replace(/\b([PpQq])\(([a-zA-Z0-9,\s]+(?:[∣|│\\]+[a-zA-Z0-9,\s]+)?)\)/g, (_, fn, inside) => {
+        const cleanedInside = inside.replace(/[∣│|]/g, " \\mid ");
+        return `\\(${fn}(${cleanedInside})\\)`;
+      });
+
+      // Wrap distribution N(0,I) or N(0, I)
+      s = s.replace(/\bN\(0\s*,\s*I\)/g, `\\(\\mathcal{N}(0, I)\\)`);
+
+      // Wrap O(t·dmodel) or O(dmodel) or O(...)
+      s = s.replace(/\bO\(([^)]*dmodel[^)]*)\)/g, (_, inside) => {
+        const cleaned = inside.replace(/·/g, " \\cdot ").replace(/dmodel/g, "d_{\\text{model}}");
+        return `\\(O(${cleaned})\\)`;
+      });
+
+      // Wrap Concat(head1,…,headh)
+      s = s.replace(/\bConcat\(([^)]+)\)/g, (_, inside) => {
+        const cleaned = inside
+          .replace(/head([0-9a-z])/g, "\\text{head}_$1")
+          .replace(/[…,]/g, ", \\dots, ");
+        return `\\(\\text{Concat}(${cleaned})\\)`;
+      });
+
+      // Wrap WQ, WK, WV, WO in text (when standalone)
+      s = s.replace(/(?<=\s|^|,)(W[QKVOD])(?=\s|[.,;:)]|$)/g, (m) => `\\(W_${m.slice(1)}\\)`);
+
+      // Wrap μ,σ2 or μ, σ^2 or \mu,\sigma2
+      s = s.replace(/(\\?mu\s*,\s*\\?sigma\s*2)/g, `\\(\\mu, \\sigma^2\\)`);
+
+      // Auto-wrap bare subscript equations like Score_{i,j}=Q_i \cdot K_j^T or X_{1,2}
+      s = s.replace(/([A-Za-z]+_\{[^{}\n]+\}(?:[=+\-*/\s]|\\cdot|[A-Za-z0-9_^{}·+\-*/^()]+)*)/g, (m) => {
         const endPunct = m.match(/[;,.]\s*$/);
         let core = m;
         let suffix = "";
@@ -69,6 +201,8 @@ function normalizeMathText(text: string): string {
         }
         return `\\(${core.trim()}\\)${suffix}`;
       });
+
+      return s;
     })
     .join("");
 }
@@ -221,6 +355,54 @@ export function SimpleMarkdown({
     // Blank line
     if (line.trim().length === 0) {
       i++;
+      continue;
+    }
+
+    // 0. Standalone / Multi-line Display Math Blocks: \[ ... \] or $$ ... $$
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith("\\[") || trimmedLine.startsWith("$$")) {
+      const isBracket = trimmedLine.startsWith("\\[");
+      const endTag = isBracket ? "\\]" : "$$";
+
+      // If opening and closing on the same single line
+      if (
+        trimmedLine.length > 2 &&
+        trimmedLine.endsWith(endTag) &&
+        trimmedLine !== "\\[" &&
+        trimmedLine !== "$$"
+      ) {
+        const mathContent = sanitizeLatex(trimmedLine.slice(2, -endTag.length));
+        blocks.push(
+          <div key={`math-${blocks.length}`} className={styles.mathBlock}>
+            <MathTex tex={mathContent} display={true} />
+          </div>,
+        );
+        i++;
+        continue;
+      }
+
+      // Collect multi-line math block
+      const mathLines: string[] = [];
+      const startLinePart = trimmedLine.slice(2);
+      if (startLinePart.trim()) mathLines.push(startLinePart);
+      i++;
+      while (i < lines.length && !lines[i].includes(endTag)) {
+        mathLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) {
+        const endLine = lines[i];
+        const endIdx = endLine.indexOf(endTag);
+        const contentBeforeEnd = endLine.slice(0, endIdx);
+        if (contentBeforeEnd.trim()) mathLines.push(contentBeforeEnd);
+        i++; // consume line containing endTag
+      }
+      const fullMath = sanitizeLatex(mathLines.join("\n"));
+      blocks.push(
+        <div key={`math-${blocks.length}`} className={styles.mathBlock}>
+          <MathTex tex={fullMath} display={true} />
+        </div>,
+      );
       continue;
     }
 

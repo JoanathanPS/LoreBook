@@ -17,7 +17,7 @@ import "@xyflow/react/dist/style.css";
 import { Network, GitBranch, Search, Maximize2, Minimize2 } from "lucide-react";
 import type { GraphEdge, GraphNode } from "./types";
 import { ConceptNode, type ConceptFlowNode, type ConceptNodeData } from "./ConceptNode";
-import { masteryColor } from "@/lib/study/mastery-color";
+import { riskColor } from "@/lib/study/mastery-color";
 import styles from "./ConceptGraph.module.css";
 
 const nodeTypes: NodeTypes = { concept: ConceptNode };
@@ -27,7 +27,7 @@ interface SimNode extends d3.SimulationNodeDatum {
 }
 type SimLink = d3.SimulationLinkDatum<SimNode>;
 
-/** Force-directed layout for network mode */
+/** Force-directed layout for network mode fallback */
 function layoutForce(nodes: GraphNode[], edges: GraphEdge[]): Map<string, { x: number; y: number }> {
   const simNodes: SimNode[] = nodes.map((n) => ({ id: n.id }));
   const simLinks: SimLink[] = edges.map((e) => ({ source: e.source, target: e.target }));
@@ -65,7 +65,7 @@ function layoutMindMap(
 
   // Get primary nodes (level 1 or direct children of root)
   const primaryIds = childMap.get(rootId) ?? visibleNodes.filter((n) => !n.parentId && n.id !== rootId).map((n) => n.id);
-  
+
   // Vertical spacing constants
   const X_GAP = 280;
   const Y_GAP = 65;
@@ -137,10 +137,9 @@ function InnerGraph({
   const { fitView } = useReactFlow();
   const [layoutMode, setLayoutMode] = useState<"mindmap" | "network">("mindmap");
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Set of expanded node IDs in mind-map mode
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
-    // Default: expand root and first level concepts
     return new Set(["course-root", ...nodes.slice(0, 8).map((n) => n.id)]);
   });
 
@@ -153,6 +152,9 @@ function InnerGraph({
       name: courseName,
       importance: 5,
       mastery: 0.8,
+      examWeight: 5,
+      riskScore: 0.5,
+      riskLevel: "low",
       level: 0,
     };
     return [rootNode, ...nodes];
@@ -230,6 +232,15 @@ function InnerGraph({
         if (n.id === rootNodeId) continue;
         const pid = n.parentId || rootNodeId;
         if (visibleIdSet.has(pid)) {
+          const isInspected = pid === selectedId || n.id === selectedId;
+          const targetRisk = n.riskLevel ?? "moderate";
+          const strokeColor =
+            isInspected
+              ? "#7b3232"
+              : targetRisk === "high"
+              ? "rgba(123, 50, 50, 0.45)"
+              : "rgba(160, 124, 62, 0.35)";
+
           treeEdges.push({
             id: `edge-${pid}-${n.id}`,
             source: pid,
@@ -237,10 +248,10 @@ function InnerGraph({
             sourceHandle: "right",
             targetHandle: "left",
             type: "smoothstep",
-            animated: pid === selectedId || n.id === selectedId,
+            animated: isInspected,
             style: {
-              stroke: n.id === selectedId ? "#7b3232" : "rgba(160, 124, 62, 0.4)",
-              strokeWidth: n.id === selectedId ? 2.5 : 1.75,
+              stroke: strokeColor,
+              strokeWidth: isInspected ? 2.5 : 1.75,
             },
           });
         }
@@ -259,7 +270,7 @@ function InnerGraph({
       }));
   }, [visibleNodes, layoutMode, selectedId, edges]);
 
-  // RF Nodes with rich metadata
+  // RF Nodes with risk metadata
   const rfNodes: ConceptFlowNode[] = useMemo(() => {
     const lowerQuery = searchQuery.trim().toLowerCase();
 
@@ -276,6 +287,9 @@ function InnerGraph({
           name: n.name,
           mastery: n.mastery ?? 0.5,
           importance: n.importance ?? 1,
+          examWeight: n.examWeight,
+          riskScore: n.riskScore,
+          riskLevel: n.riskLevel,
           level: n.level ?? (n.id === rootNodeId ? 0 : 1),
           isRoot: n.id === rootNodeId,
           isInspected: n.id === selectedId,
@@ -318,17 +332,17 @@ function InnerGraph({
             className={styles.controlBtn}
             data-active={layoutMode === "mindmap"}
             onClick={() => setLayoutMode("mindmap")}
-            title="Interactive Tree Mind Map"
+            title="Curriculum Hierarchy Mind Map"
           >
             <GitBranch size={13} />
-            Mind Map
+            Exam Map
           </button>
           <button
             type="button"
             className={styles.controlBtn}
             data-active={layoutMode === "network"}
             onClick={() => setLayoutMode("network")}
-            title="Neural Network Co-occurrence Graph"
+            title="Network Graph View"
           >
             <Network size={13} />
             Network
@@ -381,7 +395,12 @@ function InnerGraph({
         <Background gap={24} size={1} color="rgba(38, 49, 64, 0.12)" />
         <Controls showInteractive={false} position="bottom-left" />
         <MiniMap
-          nodeColor={(n) => masteryColor((n.data as ConceptNodeData).mastery ?? 0.5)}
+          nodeColor={(n) => {
+            const data = n.data as ConceptNodeData;
+            if (data.isRoot) return "#26313f";
+            const score = data.riskScore ?? ((data.examWeight ?? 3) * (1 - (data.mastery ?? 0.5)));
+            return riskColor(score);
+          }}
           maskColor="rgba(243, 236, 218, 0.65)"
           bgColor="#ede3cb"
           className={styles.minimap}
@@ -406,4 +425,3 @@ export function ConceptGraph(props: {
     </ReactFlowProvider>
   );
 }
-

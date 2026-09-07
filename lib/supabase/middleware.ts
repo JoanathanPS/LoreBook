@@ -16,6 +16,28 @@ const PROTECTED_PREFIXES = [
 ];
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix),
+  );
+
+  const cookies = request.cookies.getAll();
+  const hasAuthCookie = cookies.some((c) =>
+    c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
+  );
+
+  // Fast path: If route is protected and user has no auth cookie at all, redirect immediately
+  if (isProtected && !hasAuthCookie) {
+    const redirectUrl = new URL("/login", request.url);
+    redirectUrl.searchParams.set("redirectTo", pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // Fast path: If route is not protected and has no auth cookies, pass through with zero overhead
+  if (!isProtected && !hasAuthCookie) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -41,13 +63,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    request.nextUrl.pathname.startsWith(prefix),
-  );
-
   if (!user && isProtected) {
     const redirectUrl = new URL("/login", request.url);
-    redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
+    redirectUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 

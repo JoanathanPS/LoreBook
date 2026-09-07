@@ -3,9 +3,11 @@ export interface UnderlyingConceptItem {
   brief: string;
   category?: string;
   importance?: number;
+  examWeight?: number;
 }
 
 export interface ConceptDrilldownData {
+  examWeight?: number;
   summary?: string;
   mechanisms?: string[];
   subconcepts?: UnderlyingConceptItem[];
@@ -14,17 +16,27 @@ export interface ConceptDrilldownData {
   keyQuestions?: string[];
 }
 
+export interface SourceDocRef {
+  documentId?: string;
+  documentTitle: string;
+  kind?: string;
+}
+
 export interface GraphNode {
   id: string;
   name: string;
   importance: number;
   mastery: number;
+  examWeight?: number;
+  riskScore?: number;
+  riskLevel?: "high" | "moderate" | "low";
   parentId?: string | null;
   description?: string | null;
   level?: number;
   underlyingData?: ConceptDrilldownData | null;
   childIds?: string[];
   childCount?: number;
+  sources?: SourceDocRef[];
 }
 
 export interface GraphEdge {
@@ -48,4 +60,3 @@ export interface CourseMindMapData {
   edges: GraphEdge[];
   artifactsByConcept: Record<string, ArtifactRef[]>;
 }
-

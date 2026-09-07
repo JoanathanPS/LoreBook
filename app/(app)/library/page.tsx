@@ -79,11 +79,11 @@ export default async function LibraryPage() {
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
               <SoundToggle />
-              <Button render={<Link href="/dashboard" />} nativeButton={false} variant="ghost" size="sm">
+              <Button render={<Link href="/dashboard" prefetch={false} />} nativeButton={false} variant="ghost" size="sm">
                 <LayoutDashboard size={14} />
                 Dashboard
               </Button>
-              <Button render={<Link href="/settings" />} nativeButton={false} variant="ghost" size="sm">
+              <Button render={<Link href="/settings" prefetch={false} />} nativeButton={false} variant="ghost" size="sm">
                 <Settings size={14} />
                 Settings
               </Button>
@@ -133,7 +133,7 @@ export default async function LibraryPage() {
                     </div>
                     <div className={styles.courseActions}>
                       <Button
-                        render={<Link href={`/chat/${course.id}`} />}
+                        render={<Link href={`/chat/${course.id}`} prefetch={false} />}
                         nativeButton={false}
                         variant="outline"
                         size="sm"
@@ -142,7 +142,7 @@ export default async function LibraryPage() {
                         Chat
                       </Button>
                       <Button
-                        render={<Link href={`/graph/${course.id}`} />}
+                        render={<Link href={`/graph/${course.id}`} prefetch={false} />}
                         nativeButton={false}
                         variant="outline"
                         size="sm"
@@ -151,7 +151,7 @@ export default async function LibraryPage() {
                         Graph
                       </Button>
                       <Button
-                        render={<Link href={`/predict/${course.id}`} />}
+                        render={<Link href={`/predict/${course.id}`} prefetch={false} />}
                         nativeButton={false}
                         variant="outline"
                         size="sm"

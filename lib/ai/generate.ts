@@ -5,12 +5,11 @@ import { withRetry } from "./retry";
 
 const MODEL = groq("openai/gpt-oss-120b");
 
-// The viewer (components/study/SimpleMarkdown.tsx + MathTex.tsx) only
-// renders math wrapped in these exact delimiters via KaTeX — anything else
-// (raw "\bigl", "_{}", bare LaTeX) is printed as literal text. Every prompt
-// that can produce a formula needs this rule.
+// The viewer (components/study/SimpleMarkdown.tsx + MathTex.tsx) renders
+// math via KaTeX. Every prompt that can produce math needs this strict rule.
 const MATH_RULE =
-  'For any math — formulas, equations, single variables/symbols like "θ" or "x_i" — wrap it in LaTeX delimiters: \\( ... \\) for inline math, \\[ ... \\] for a standalone equation on its own line. Never write bare LaTeX commands (e.g. \\bigl, \\frac, subscripts) outside these delimiters.';
+  'For any mathematical expression, variable, formula, or equation:\n- Standalone/block equations MUST be wrapped in \\[ ... \\] on their own line.\n- Inline variables, symbols, terms (e.g. \\(Q = X W_Q\\), \\(K = X W_K\\), \\(V = X W_V\\), \\(1/\\sqrt{d_k}\\), \\(P(y \\mid x)\\), \\(\\mu, \\sigma^2\\), \\(d_{\\text{model}}\\)) MUST be wrapped in \\( ... \\).\n- Never output bare unformatted equations like "Q=XWQ", "1/dk", "\\sumt", "p\\theta", "xt", or "mu,sigma2". Always use proper LaTeX subscripts (e.g. \\sum_t, p_\\theta, x_t, \\sigma^2).';
+
 
 export async function generateSummaryText(
   context: string,

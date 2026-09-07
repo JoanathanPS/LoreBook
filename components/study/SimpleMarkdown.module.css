@@ -196,3 +196,16 @@
   vertical-align: super;
   margin-left: 0.1rem;
 }
+
+/* Display Math Block */
+.mathBlock {
+  margin: 0.85rem 0;
+  padding: 0.85rem 1.25rem;
+  background: color-mix(in oklab, var(--secondary) 45%, var(--card));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(38, 49, 64, 0.05);
+}
+

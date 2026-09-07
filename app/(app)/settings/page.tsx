@@ -46,11 +46,11 @@ export default async function SettingsPage() {
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <CommandPaletteTrigger />
             <SoundToggle />
-            <Button render={<Link href="/library" />} nativeButton={false} variant="ghost" size="sm">
+            <Button render={<Link href="/library" prefetch={false} />} nativeButton={false} variant="ghost" size="sm">
               <Library size={14} />
               Library
             </Button>
-            <Button render={<Link href="/dashboard" />} nativeButton={false} variant="ghost" size="sm">
+            <Button render={<Link href="/dashboard" prefetch={false} />} nativeButton={false} variant="ghost" size="sm">
               <LayoutDashboard size={14} />
               Dashboard
             </Button>

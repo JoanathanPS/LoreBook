@@ -3,7 +3,7 @@ import { getCourseContext } from "@/lib/ingest/context";
 import { generateFlashcards } from "@/lib/ai/generate";
 import { upsertConcepts } from "@/lib/study/mastery";
 
-/** Exam Predictor: builds a flashcard deck targeting the given high-priority concepts. */
+/** Exam Predictor & Risk Map: builds a flashcard deck targeting the given high-priority concepts. */
 export async function generateDrillDeck(params: {
   courseId: string;
   courseName: string;
@@ -15,13 +15,17 @@ export async function generateDrillDeck(params: {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  const titlePrefix = params.focusConcepts?.length
+    ? `Drill: ${params.focusConcepts.slice(0, 2).join(" & ")}`
+    : "Exam drill deck";
+
   const { data: artifact, error: insertError } = await supabase
     .from("study_artifacts")
     .insert({
       course_id: params.courseId,
       user_id: user.id,
       kind: "flashcard_deck",
-      title: `Exam drill deck — ${params.courseName}`,
+      title: `${titlePrefix} — ${params.courseName}`,
       status: "generating",
     })
     .select("id")
