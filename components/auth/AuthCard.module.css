@@ -97,38 +97,6 @@
   text-align: center;
 }
 
-.success {
-  font-size: 0.8125rem;
-  color: #27ae60;
-  text-align: center;
-  font-weight: 500;
-}
-
-.resendFooter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
-}
-
-.resendToggleBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-  text-decoration: underline;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.resendToggleBtn:hover {
-  color: var(--foreground);
-}
-
 .divider {
   display: flex;
   align-items: center;
@@ -155,4 +123,3 @@
   gap: 0.6rem;
   font-weight: 500;
 }
-
