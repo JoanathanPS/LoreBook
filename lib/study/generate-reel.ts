@@ -58,8 +58,8 @@ export async function generateReelArtifact(params: {
     await supabase
       .from("study_artifacts")
       .update({
-        title: script.concepts[0] ? `${script.concepts[0]} — ${params.courseName}` : artifact.id,
-        content: { recallQuestions: script.recallQuestions, conceptIds },
+        title: script.concepts[0] ? `Reel: ${script.concepts[0]}` : `Reel — ${params.courseName}`,
+        content: { cards: script.cards, recallQuestions: script.recallQuestions, conceptIds },
         status: "ready",
       })
       .eq("id", artifact.id);

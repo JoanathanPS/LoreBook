@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { FileText, MessageSquare, Sparkles, Share2, LayoutDashboard, Target } from "lucide-react";
+import { FileText, MessageSquare, Sparkles, Share2, LayoutDashboard, Target, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createCourse } from "@/lib/actions/courses";
 import { signOut } from "@/lib/actions/auth";
@@ -10,12 +11,12 @@ import { Input } from "@/components/ui/input";
 import { UploadDropzone } from "@/components/library/UploadDropzone";
 import { DocumentStatusBadge } from "@/components/library/DocumentStatusBadge";
 import { ArtifactGenerator } from "@/components/library/ArtifactGenerator";
+import { StudyArtifactsList, type ArtifactItem } from "@/components/library/StudyArtifactsList";
 import { CommandPaletteTrigger } from "@/components/command/CommandPaletteTrigger";
 import { SoundToggle } from "@/components/audio/SoundToggle";
 import { InviteButton } from "@/components/collab/InviteButton";
 import { DeleteCourseButton } from "@/components/library/DeleteCourseButton";
 import { DocumentRowActions } from "@/components/library/DocumentRowActions";
-import { artifactHref } from "@/lib/study/artifact-links";
 import { courseAccent } from "@/lib/study/course-accent";
 import styles from "./page.module.css";
 
@@ -29,19 +30,12 @@ interface DocumentRow {
   document_chunks: { count: number }[];
 }
 
-interface ArtifactRow {
-  id: string;
-  kind: string;
-  title: string;
-  status: string;
-}
-
 interface CourseRow {
   id: string;
   name: string;
   user_id: string;
   documents: DocumentRow[];
-  study_artifacts: ArtifactRow[];
+  study_artifacts: ArtifactItem[];
 }
 
 export default async function LibraryPage() {
@@ -54,7 +48,7 @@ export default async function LibraryPage() {
   const { data: courses, error: coursesError } = await supabase
     .from("courses")
     .select(
-      "id, name, user_id, documents(id, title, type, status, error_message, user_id, document_chunks(count)), study_artifacts(id, kind, title, status)",
+      "id, name, user_id, documents(id, title, type, status, error_message, user_id, document_chunks(count)), study_artifacts(id, kind, title, status, created_at)",
     )
     .order("created_at", { ascending: true })
     .returns<CourseRow[]>();
@@ -72,8 +66,15 @@ export default async function LibraryPage() {
       <div className={styles.wrap}>
         <header className={styles.header}>
           <div className={styles.headerInner}>
-            <Link href="dashboard" className={styles.brand}>
-              lore.book
+            <Link href="/dashboard" className={styles.brand}>
+              <Image
+                src="/brand/lore-header-v2.png"
+                alt="LoreBook"
+                width={150}
+                height={40}
+                priority
+                className={styles.logoImg}
+              />
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
@@ -81,6 +82,10 @@ export default async function LibraryPage() {
               <Button render={<Link href="/dashboard" />} nativeButton={false} variant="ghost" size="sm">
                 <LayoutDashboard size={14} />
                 Dashboard
+              </Button>
+              <Button render={<Link href="/settings" />} nativeButton={false} variant="ghost" size="sm">
+                <Settings size={14} />
+                Settings
               </Button>
               <form action={signOut}>
                 <Button type="submit" variant="ghost" size="sm">
@@ -197,20 +202,12 @@ export default async function LibraryPage() {
                     </div>
                     <ArtifactGenerator courseId={course.id} courseName={course.name} />
 
-                    {course.study_artifacts.length > 0 && (
-                      <div className={styles.docList}>
-                        {course.study_artifacts.map((artifact) => (
-                          <Link
-                            key={artifact.id}
-                            href={artifactHref(artifact.kind, artifact.id)}
-                            className={`${styles.docRow} hover-lift`}
-                          >
-                            <span className={styles.docTitle}>{artifact.title}</span>
-                            <DocumentStatusBadge status={artifact.status} />
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                    <StudyArtifactsList
+                      artifacts={[...course.study_artifacts].sort(
+                        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+                      )}
+                      isOwner={isOwner}
+                    />
                   </div>
                 </div>
                 );

@@ -32,9 +32,35 @@
 }
 
 .header {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 0.35rem;
 }
+
+.brandLogo {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+  text-decoration: none;
+  line-height: 1.1;
+  display: inline-block;
+  text-align: center;
+  margin-bottom: 0.25rem;
+  transition: opacity 0.15s ease;
+}
+
+.brandLogo:hover {
+  opacity: 0.9;
+}
+
+.brandDot {
+  color: var(--primary);
+}
+
 
 .title {
   font-size: 1.25rem;
@@ -45,6 +71,8 @@
 .subtitle {
   font-size: 0.8125rem;
   color: var(--muted-foreground);
+  text-align: center;
+  line-height: 1.45;
 }
 
 .field {
@@ -60,9 +88,38 @@
 .error {
   font-size: 0.8125rem;
   color: var(--chart-5);
+  text-align: center;
 }
 
 .notice {
   font-size: 0.8125rem;
   color: var(--chart-2);
+  text-align: center;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.oauthButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-weight: 500;
 }

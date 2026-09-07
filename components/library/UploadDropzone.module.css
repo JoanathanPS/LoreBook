@@ -86,6 +86,21 @@
   white-space: nowrap;
 }
 
+.dismissBtn {
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+  border-radius: var(--radius-sm);
+}
+
+.dismissBtn:hover {
+  color: var(--destructive);
+  background: var(--muted);
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

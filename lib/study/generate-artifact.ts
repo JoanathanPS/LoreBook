@@ -94,6 +94,15 @@ export async function generateArtifact(params: {
     const concepts = await extractConcepts(context);
     await upsertConcepts(supabase, user.id, params.courseId, artifact.id, concepts);
 
+    const topConceptLabel = concepts.slice(0, 2).join(" & ");
+    if (topConceptLabel) {
+      const enrichedTitle = `${TITLE_BY_KIND[params.kind]}: ${topConceptLabel}`;
+      await supabase
+        .from("study_artifacts")
+        .update({ title: enrichedTitle })
+        .eq("id", artifact.id);
+    }
+
     return artifact.id;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Generation failed";

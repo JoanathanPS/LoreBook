@@ -25,7 +25,7 @@ export default async function GraphPage({
 
   const { data: concepts } = await supabase
     .from("concepts")
-    .select("id, name")
+    .select("id, name, parent_id, description, level, underlying_data")
     .eq("course_id", courseId);
 
   const conceptIds = (concepts ?? []).map((c) => c.id);
@@ -68,17 +68,31 @@ export default async function GraphPage({
   const nodes: GraphNode[] = (concepts ?? []).map((c) => ({
     id: c.id,
     name: c.name,
-    importance: linksByConcept.get(c.id)?.size ?? 0,
+    importance: linksByConcept.get(c.id)?.size ?? 1,
     mastery: masteryByConcept.get(c.id) ?? 0.5,
+    parentId: c.parent_id ?? null,
+    description: c.description ?? null,
+    level: c.level ?? 1,
+    underlyingData: c.underlying_data ?? null,
   }));
 
   const edgeSet = new Map<string, GraphEdge>();
+
+  // Add hierarchical edges
+  for (const c of concepts ?? []) {
+    if (c.parent_id) {
+      const key = `${c.parent_id}-${c.id}`;
+      edgeSet.set(key, { source: c.parent_id, target: c.id, kind: "hierarchy" });
+    }
+  }
+
+  // Add co-occurrence edges
   for (const conceptIdsForArtifact of conceptsByArtifact.values()) {
     for (let i = 0; i < conceptIdsForArtifact.length; i++) {
       for (let j = i + 1; j < conceptIdsForArtifact.length; j++) {
         const [a, b] = [conceptIdsForArtifact[i], conceptIdsForArtifact[j]].sort();
         const key = `${a}|${b}`;
-        if (!edgeSet.has(key)) edgeSet.set(key, { source: a, target: b });
+        if (!edgeSet.has(key)) edgeSet.set(key, { source: a, target: b, kind: "cooccurrence" });
       }
     }
   }
@@ -96,3 +110,4 @@ export default async function GraphPage({
     </>
   );
 }
+

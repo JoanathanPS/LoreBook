@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { generateDrillDeck } from "@/lib/study/generate-drill-deck";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const { courseId, courseName, focusConcepts } = (await request.json()) as {
     courseId: string;

@@ -46,3 +46,32 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+export async function deleteAccount(): Promise<AuthState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // 1. Try calling the PostgreSQL RPC function (migration 0013)
+  const { error: rpcError } = await supabase.rpc("delete_user_account");
+
+  if (rpcError) {
+    console.warn("RPC delete_user_account failed, attempting cascade fallback:", rpcError.message);
+    // Fallback: delete user data from public tables
+    await supabase.from("courses").delete().eq("user_id", user.id);
+    await supabase.from("streaks").delete().eq("user_id", user.id);
+    await supabase.from("mastery_scores").delete().eq("user_id", user.id);
+    await supabase.from("quiz_attempts").delete().eq("user_id", user.id);
+    await supabase.from("flashcards").delete().eq("user_id", user.id);
+    await supabase.from("study_artifacts").delete().eq("user_id", user.id);
+    await supabase.from("documents").delete().eq("user_id", user.id);
+  }
+
+  await supabase.auth.signOut();
+  redirect("/login");
+}

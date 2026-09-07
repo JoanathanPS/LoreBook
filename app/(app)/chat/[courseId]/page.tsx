@@ -14,15 +14,41 @@ export default async function ChatPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: course } = await supabase
-    .from("courses")
-    .select("id, name, documents(id, title, status, type)")
-    .eq("id", courseId)
-    .single();
+  const [{ data: course }, { data: concepts }, { data: historyMessages }] = await Promise.all([
+    supabase
+      .from("courses")
+      .select("id, name, documents(id, title, status, type)")
+      .eq("id", courseId)
+      .single(),
+    supabase
+      .from("concepts")
+      .select("id, name")
+      .eq("course_id", courseId)
+      .limit(30),
+    supabase
+      .from("chat_messages")
+      .select("id, role, content, metadata, created_at")
+      .eq("course_id", courseId)
+      .order("created_at", { ascending: true })
+      .limit(100),
+  ]);
 
   if (!course) notFound();
 
+  const initialMessages = (historyMessages ?? []).map((m) => ({
+    id: m.id,
+    role: m.role as "user" | "assistant" | "system",
+    parts: [{ type: "text" as const, text: m.content }],
+    metadata: m.metadata ?? undefined,
+  }));
+
   return (
-    <ChatPanel courseId={course.id} courseName={course.name} documents={course.documents} />
+    <ChatPanel
+      courseId={course.id}
+      courseName={course.name}
+      documents={course.documents ?? []}
+      concepts={concepts ?? []}
+      initialMessages={initialMessages}
+    />
   );
 }

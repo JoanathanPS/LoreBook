@@ -1,0 +1,16 @@
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.deleteButton {
+  opacity: 0.6;
+  transition: opacity 0.15s ease, color 0.15s ease;
+  color: var(--muted-foreground);
+}
+
+.deleteButton:hover {
+  opacity: 1;
+  color: var(--destructive);
+}

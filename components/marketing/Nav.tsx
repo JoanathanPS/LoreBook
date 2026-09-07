@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import styles from "./Nav.module.css";
 
@@ -12,7 +13,14 @@ export function Nav() {
     <header className={styles.nav}>
       <div className={styles.inner}>
         <Link href="/" className={styles.brand}>
-          lore<span className={styles.dot}>.</span>book
+          <Image
+            src="/brand/lore-header-v2.png"
+            alt="LoreBook"
+            width={150}
+            height={40}
+            priority
+            className={styles.logoImg}
+          />
         </Link>
 
         <nav className={styles.links}>

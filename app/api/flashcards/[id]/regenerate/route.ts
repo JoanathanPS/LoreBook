@@ -4,6 +4,8 @@ import { getCourseContext } from "@/lib/ingest/context";
 import { generateFlashcards, extractConcepts } from "@/lib/ai/generate";
 import { upsertConcepts } from "@/lib/study/mastery";
 
+export const maxDuration = 60;
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },

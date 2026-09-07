@@ -1,20 +1,54 @@
 .node {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: var(--radius-4xl);
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 9999px;
   border: 2px solid;
-  background: var(--card);
-  color: var(--foreground);
+  background: #ffffff;
+  color: var(--color-ink, #26313f);
+  font-size: 0.8125rem;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: var(--shadow-glass);
+  box-shadow: 0 2px 8px rgba(38, 49, 63, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+
+.node:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(38, 49, 63, 0.14);
+}
+
+.node[data-root="true"] {
+  background: #26313f;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-family: var(--font-heading, "Fraunces", Georgia, serif);
+  font-weight: 700;
+  padding: 0.625rem 1.25rem;
+  border-width: 3px;
+  box-shadow: 0 4px 18px rgba(38, 49, 63, 0.22);
+}
+
+.node[data-sub="true"] {
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.35rem 0.65rem;
+  border-style: dashed;
+  border-width: 1.5px;
 }
 
 .node[data-inspected="true"] {
-  background: var(--secondary);
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--primary);
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px var(--color-terracotta, #7b3232), 0 8px 24px rgba(123, 50, 50, 0.25);
+  transform: scale(1.04);
+}
+
+.rootIcon {
+  display: inline-flex;
+  color: var(--color-gold, #a07c3e);
 }
 
 .dot {
@@ -22,6 +56,43 @@
   height: 0.5rem;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.label {
+  letter-spacing: -0.01em;
+}
+
+.expandBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.125rem 0.3rem;
+  background: rgba(160, 124, 62, 0.15);
+  border: 1px solid rgba(160, 124, 62, 0.35);
+  color: var(--color-ink, #26313f);
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: 0.15rem;
+}
+
+.expandBadge:hover {
+  background: var(--color-terracotta, #7b3232);
+  color: #ffffff;
+  border-color: var(--color-terracotta, #7b3232);
+}
+
+.childCount {
+  font-size: 0.625rem;
+}
+
+.sparkleHint {
+  display: inline-flex;
+  color: var(--color-gold, #a07c3e);
+  opacity: 0.75;
 }
 
 .handle {
@@ -31,3 +102,4 @@
   border: none;
   background: transparent;
 }
+

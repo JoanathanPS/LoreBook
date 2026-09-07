@@ -3,6 +3,7 @@ import { chunkText } from "./chunk";
 import { embedDocuments } from "@/lib/ai/embeddings";
 import { extractPdf } from "./extractors/pdf";
 import { extractDocx } from "./extractors/docx";
+import { extractPptx } from "./extractors/pptx";
 import { extractImage } from "./extractors/image";
 import { extractAudio } from "./extractors/audio";
 import { extractNote } from "./extractors/note";
@@ -49,9 +50,13 @@ export async function processDocument(documentId: string): Promise<void> {
       })),
     );
 
-    const embeddings = await embedDocuments(chunkRows.map((c) => c.content));
+    // Limit max chunks per document to stay within free-tier quota on 500+ page books
+    const MAX_CHUNKS_PER_DOC = 80;
+    const cappedChunkRows = chunkRows.slice(0, MAX_CHUNKS_PER_DOC);
 
-    const rows = chunkRows.map((chunk, i) => ({
+    const embeddings = await embedDocuments(cappedChunkRows.map((c) => c.content));
+
+    const rows = cappedChunkRows.map((chunk, i) => ({
       document_id: documentId,
       user_id: doc.user_id,
       chunk_index: i,
@@ -61,8 +66,13 @@ export async function processDocument(documentId: string): Promise<void> {
       timestamp_ref: chunk.timestamp_ref,
     }));
 
-    const { error: insertError } = await supabase.from("document_chunks").insert(rows);
-    if (insertError) throw new Error(insertError.message);
+    // Insert chunks in batches of 50 to avoid Postgres payload size limits on large PDFs
+    const CHUNK_BATCH_SIZE = 50;
+    for (let i = 0; i < rows.length; i += CHUNK_BATCH_SIZE) {
+      const batch = rows.slice(i, i + CHUNK_BATCH_SIZE);
+      const { error: insertError } = await supabase.from("document_chunks").insert(batch);
+      if (insertError) throw new Error(`Failed to save chunks: ${insertError.message}`);
+    }
 
     // Concept tagging is an enrichment, not core to ingestion succeeding —
     // don't fail the whole upload if this one step has trouble.
@@ -103,6 +113,6 @@ async function extractSegments(
     case "note":
       return extractNote(buffer);
     case "pptx":
-      throw new Error("PowerPoint extraction isn't implemented yet — try exporting to PDF.");
+      return extractPptx(buffer);
   }
 }

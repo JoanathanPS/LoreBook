@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { RefreshCw, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Eye, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,6 +50,15 @@ export function DocumentRowActions({
   return (
     <>
       <div className={styles.actions}>
+        <Button
+          render={<Link href={`/document/${documentId}`} />}
+          nativeButton={false}
+          variant="ghost"
+          size="icon-sm"
+          title="View document"
+        >
+          <Eye size={13} />
+        </Button>
         {canRetry && (
           <Button
             type="button"

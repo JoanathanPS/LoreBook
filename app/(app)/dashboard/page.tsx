@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { Flame, Library, Star } from "lucide-react";
+import { Flame, Library, Star, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
@@ -65,7 +66,14 @@ export default async function DashboardPage() {
         <header className={styles.header}>
           <div className={styles.headerInner}>
             <Link href="/library" className={styles.brand}>
-              lore.book
+              <Image
+                src="/brand/lore-header-v2.png"
+                alt="LoreBook"
+                width={150}
+                height={40}
+                priority
+                className={styles.logoImg}
+              />
             </Link>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
@@ -73,6 +81,10 @@ export default async function DashboardPage() {
               <Button render={<Link href="/library" />} nativeButton={false} variant="ghost" size="sm">
                 <Library size={14} />
                 Library
+              </Button>
+              <Button render={<Link href="/settings" />} nativeButton={false} variant="ghost" size="sm">
+                <Settings size={14} />
+                Settings
               </Button>
               <form action={signOut}>
                 <Button type="submit" variant="ghost" size="sm">

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { generateArtifact, type ArtifactKind } from "@/lib/study/generate-artifact";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const body = await request.json();
   const { courseId, courseName, kind, documentId } = body as {

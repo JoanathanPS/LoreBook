@@ -8,23 +8,20 @@ export function Hero() {
   return (
     <section className={styles.section}>
       <div className={styles.cover}>
-        <Image
-          src="/brand/lore-mark.png"
-          alt=""
-          width={220}
-          height={275}
-          priority
-          className={styles.mark}
-          aria-hidden="true"
-        />
-
         <span className={styles.eyebrow} data-anim="fade-up">
           A study workspace, not another app to manage
         </span>
 
-        <h1 className={styles.headline} data-anim="headline">
-          lore<span className={styles.dot}>.</span>book
-        </h1>
+        <div className={styles.logoWrap} data-anim="headline">
+          <Image
+            src="/brand/lore-header-v2.png"
+            alt="LoreBook"
+            width={450}
+            height={160}
+            priority
+            className={styles.mainLogo}
+          />
+        </div>
 
         <p className={styles.subhead} data-anim="fade-up">
           Upload the PDF, the lecture recording, or the photo of your notes.

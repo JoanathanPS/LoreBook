@@ -19,11 +19,17 @@
   text-align: center;
 }
 
-.mark {
-  width: clamp(4.5rem, 8vw, 5.5rem);
+.logoWrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-block: 0.75rem 1rem;
+}
+
+.mainLogo {
+  width: clamp(16rem, 38vw, 28rem);
   height: auto;
-  margin-bottom: 0.25rem;
-  opacity: 0.92;
+  object-fit: contain;
 }
 
 .eyebrow {
@@ -31,19 +37,6 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--gilt);
-}
-
-.headline {
-  font-family: var(--font-display);
-  font-size: clamp(3.25rem, 9vw, 6.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  font-weight: 600;
-  color: var(--foreground);
-}
-
-.dot {
-  color: var(--primary);
 }
 
 .subhead {

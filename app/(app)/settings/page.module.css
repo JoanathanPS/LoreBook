@@ -1,0 +1,101 @@
+.wrap {
+  min-height: 100dvh;
+  padding: 2.5rem 1.5rem 4rem;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 2.5rem;
+}
+
+.header {
+  width: 100%;
+  max-width: 48rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+}
+
+.logoImg {
+  height: 2.125rem;
+  width: auto;
+  object-fit: contain;
+}
+
+.main {
+  width: 100%;
+  max-width: 48rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.heading {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gilt);
+  font-weight: 600;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.card {
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-glass);
+  padding: 1.75rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.infoItem {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.infoLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.infoValue {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--foreground);
+  word-break: break-all;
+}

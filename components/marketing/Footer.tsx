@@ -49,10 +49,10 @@ export function Footer() {
 
         <div className={styles.colophon}>
           <Image
-            src="/brand/lore-mark.png"
+            src="/brand/lore-header-v2.png"
             alt="LoreBook"
-            width={28}
-            height={35}
+            width={85}
+            height={24}
             className={styles.mark}
           />
           <span>© {year} LoreBook — free for every classroom.</span>

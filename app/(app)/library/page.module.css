@@ -18,10 +18,14 @@
 }
 
 .brand {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.125rem;
-  color: var(--foreground);
+  display: flex;
+  align-items: center;
+}
+
+.logoImg {
+  height: 2.125rem;
+  width: auto;
+  object-fit: contain;
 }
 
 .main {

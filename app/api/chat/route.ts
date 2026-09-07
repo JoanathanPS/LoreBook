@@ -42,10 +42,15 @@ export async function POST(request: Request) {
     .map((p) => (p as { text: string }).text)
     .join(" ") ?? "";
 
+  const isGreeting =
+    /^(hi|hello|hey|hey there|greetings|good morning|good afternoon|good evening|howdy|sup|thanks|thank you|ok|okay|bye|goodbye|who are you|what can you do)[!.?]*$/i.test(
+      queryText.trim(),
+    );
+
   let contextBlock = "No relevant material was found for this question.";
   let sources: ChatSource[] = [];
 
-  if (queryText.trim()) {
+  if (queryText.trim() && !isGreeting) {
     const queryEmbedding = await embedQuery(queryText);
     const { data } = await supabase.rpc("match_document_chunks", {
       query_embedding: queryEmbedding,
@@ -83,8 +88,10 @@ export async function POST(request: Request) {
   const mathRule =
     'For any math — formulas, equations, single variables/symbols like "θ" or "x_i" — wrap it in LaTeX delimiters: \\( ... \\) for inline math, \\[ ... \\] for a standalone equation on its own line. Never write bare LaTeX commands (e.g. \\bigl, \\frac, subscripts) outside these delimiters.';
 
-  const system = tutorMode
-    ? `You are LoreBook's AI Tutor, running Socratic mode. This is a hard rule that overrides your normal instinct to be helpful by answering directly: you are FORBIDDEN from stating the answer to the student's question in your first reply to it, no matter how simple or directly they ask, and no matter what phrasing they use ("just tell me", "what is X", "explain Y").
+  const system = isGreeting
+    ? `You are LoreBook's study assistant for ${courseId}. Greet the student warmly and ask how you can help with their studies. Do not add any citation numbers.`
+    : tutorMode
+      ? `You are LoreBook's AI Tutor, running Socratic mode. This is a hard rule that overrides your normal instinct to be helpful by answering directly: you are FORBIDDEN from stating the answer to the student's question in your first reply to it, no matter how simple or directly they ask, and no matter what phrasing they use ("just tell me", "what is X", "explain Y").
 
 Every reply you send must end in a question mark. Using ONLY the course material excerpts below, ask ONE guiding question that leads the student toward the answer themselves. Build on their previous responses. If they get it wrong or seem stuck twice in a row, give one small hint (still as part of a question) rather than the answer. Only state the full answer once they've clearly reasoned their way to it themselves, and even then, ask if they'd like you to confirm it first.
 
@@ -92,25 +99,52 @@ Keep the questioning going turn after turn — after they answer one question, a
 
 If this is the very first message and it's a generic prompt to start (e.g. "quiz me", "start tutoring me"), pick one concrete concept from the excerpts yourself and open with a question about it — don't ask the student what they want to study.
 
-Cite the excerpt numbers in brackets when a hint draws on specific material, e.g. "think about what happens to the surroundings here [1] — what does that do to total entropy?"
+Cite the excerpt numbers in brackets ONLY when drawing on specific material, e.g. "think about what happens to the surroundings here [1] — what does that do to total entropy?"
 
 ${mathRule}
 
 Course material excerpts:
 ${contextBlock}`
-    : `You are LoreBook's study assistant. Answer the student's question using ONLY the course material excerpts below — if the excerpts don't cover it, say so plainly instead of guessing.
+      : `You are LoreBook's study assistant. Answer the student's question using ONLY the course material excerpts below — if the excerpts don't cover it, say so plainly instead of guessing.
 
-Cite sources inline using the bracketed numbers from the excerpts, e.g. "Entropy always increases in irreversible processes [1]."
+Cite sources inline using the bracketed numbers from the excerpts ONLY when directly referencing that excerpt, e.g. "Entropy always increases in irreversible processes [1]." Do not invent or include citations for general statements.
 
 ${mathRule}
 
 Course material excerpts:
 ${contextBlock}`;
 
+  if (queryText.trim()) {
+    await supabase.from("chat_messages").insert({
+      course_id: courseId,
+      user_id: user.id,
+      role: "user",
+      content: queryText,
+      metadata: {},
+    });
+  }
+
   const result = streamText({
     model: groq("openai/gpt-oss-120b"),
     system,
     messages: await convertToModelMessages(messages),
+    onFinish: async ({ text }) => {
+      if (text) {
+        // Only save citations that were actually referenced in the response text
+        const citedNumbers = new Set(
+          [...text.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])),
+        );
+        const usedSources = sources.filter((s) => citedNumbers.has(s.index));
+
+        await supabase.from("chat_messages").insert({
+          course_id: courseId,
+          user_id: user.id,
+          role: "assistant",
+          content: text,
+          metadata: { sources: usedSources },
+        });
+      }
+    },
   });
 
   return result.toUIMessageStreamResponse({

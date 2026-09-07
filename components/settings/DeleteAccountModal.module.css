@@ -1,0 +1,50 @@
+.dangerBox {
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  background: rgba(220, 38, 38, 0.03);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dangerHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--destructive);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.dangerDesc {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.confirmBody {
+  display: grid;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.warningList {
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+  display: grid;
+  gap: 0.35rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.inputGroup {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.inputLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground);
+}

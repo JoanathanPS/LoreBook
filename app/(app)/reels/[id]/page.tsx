@@ -15,20 +15,24 @@ export default async function ReelPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: artifact } = await supabase
-    .from("study_artifacts")
-    .select("status, error_message, content")
-    .eq("id", id)
-    .eq("kind", "reel")
-    .single();
+  const [
+    { data: artifact },
+    { data: cards },
+  ] = await Promise.all([
+    supabase
+      .from("study_artifacts")
+      .select("status, error_message, content")
+      .eq("id", id)
+      .eq("kind", "reel")
+      .single(),
+    supabase
+      .from("reel_cards")
+      .select("hook, body, visual_hint")
+      .eq("reel_id", id)
+      .order("order_index", { ascending: true }),
+  ]);
 
   if (!artifact) notFound();
-
-  const { data: cards } = await supabase
-    .from("reel_cards")
-    .select("hook, body, visual_hint")
-    .eq("reel_id", id)
-    .order("order_index", { ascending: true });
 
   const recallQuestions =
     (artifact.content as { recallQuestions?: RecallQuestion[] } | null)?.recallQuestions ?? [];

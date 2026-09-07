@@ -58,17 +58,59 @@ Transcribe everything useful for a student studying this later:
 
 Output plain text only — no preamble, no "here is the transcription", just the content itself.`;
 
-/** Reads a page image (handwriting, diagrams, slides) via Groq's free vision model. */
+/** Reads a page image (handwriting, diagrams, slides, textbook photos) via Gemini Vision / Groq. */
 export async function describeImage(params: {
   base64: string;
   mediaType: string;
 }): Promise<string> {
-  const groq = getClient();
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey && geminiKey.trim().length > 0) {
+    const res = await withRetry(
+      async () => {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: VISION_PROMPT },
+                    {
+                      inline_data: {
+                        mime_type: params.mediaType,
+                        data: params.base64,
+                      },
+                    },
+                  ],
+                },
+              ],
+            }),
+          },
+        );
 
+        if (!response.ok) {
+          const err = await response.text();
+          throw new Error(`Gemini Vision error (${response.status}): ${err}`);
+        }
+
+        const json = await response.json();
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        return text?.trim() ?? "";
+      },
+      { label: "Gemini (vision)" },
+    );
+
+    return res;
+  }
+
+  // Fallback: Groq
+  const groq = getClient();
   const completion = await withRetry(
     () =>
       groq.chat.completions.create({
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: "llama-3.2-11b-vision-preview",
         max_tokens: 2048,
         messages: [
           {

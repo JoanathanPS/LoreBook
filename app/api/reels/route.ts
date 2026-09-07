@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { generateReelArtifact } from "@/lib/study/generate-reel";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const { courseId, courseName, topic } = (await request.json()) as {
     courseId: string;
