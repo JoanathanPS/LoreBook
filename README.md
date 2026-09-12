@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://lorebook-olive.vercel.app"><strong>Try it live →</strong></a>
+  <a href="https://lorebook.joanathan.in/"><strong>Try it live →</strong></a>
 </p>
 
 ---
