@@ -23,7 +23,9 @@ export async function updateSession(request: NextRequest) {
 
   const cookies = request.cookies.getAll();
   const hasAuthCookie = cookies.some((c) =>
-    c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
+    // Match both the single cookie (`sb-<ref>-auth-token`) and the chunked
+    // variants Supabase uses for large sessions (`sb-<ref>-auth-token.0`, `.1`, …).
+    c.name.startsWith("sb-") && c.name.includes("-auth-token"),
   );
 
   // Fast path: If route is protected and user has no auth cookie at all, redirect immediately
