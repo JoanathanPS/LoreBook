@@ -50,8 +50,8 @@ export async function processDocument(documentId: string): Promise<void> {
       })),
     );
 
-    // Limit max chunks per document to stay within free-tier quota on 500+ page books
-    const MAX_CHUNKS_PER_DOC = 80;
+    // Keep processing time bounded to avoid API timeouts on large documents.
+    const MAX_CHUNKS_PER_DOC = 40;
     const cappedChunkRows = chunkRows.slice(0, MAX_CHUNKS_PER_DOC);
 
     const embeddings = await embedDocuments(cappedChunkRows.map((c) => c.content));
@@ -65,6 +65,14 @@ export async function processDocument(documentId: string): Promise<void> {
       page_ref: chunk.page_ref,
       timestamp_ref: chunk.timestamp_ref,
     }));
+
+    // Re-processing a document should replace old chunks instead of failing on
+    // duplicate unique keys such as (document_id, chunk_index).
+    const { error: deleteError } = await supabase
+      .from("document_chunks")
+      .delete()
+      .eq("document_id", documentId);
+    if (deleteError) throw new Error(`Failed to replace existing chunks: ${deleteError.message}`);
 
     // Insert chunks in batches of 50 to avoid Postgres payload size limits on large PDFs
     const CHUNK_BATCH_SIZE = 50;

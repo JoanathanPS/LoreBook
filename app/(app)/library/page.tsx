@@ -34,8 +34,8 @@ interface CourseRow {
   id: string;
   name: string;
   user_id: string;
-  documents: DocumentRow[];
-  study_artifacts: ArtifactItem[];
+  documents: DocumentRow[] | null;
+  study_artifacts: ArtifactItem[] | null;
 }
 
 export default async function LibraryPage() {
@@ -119,6 +119,8 @@ export default async function LibraryPage() {
           ) : (
             <div className={styles.courses}>
               {courses.map((course) => {
+                const documents = course.documents ?? [];
+                const studyArtifacts = course.study_artifacts ?? [];
                 const isOwner = course.user_id === user.id;
                 return (
                 <div
@@ -168,9 +170,9 @@ export default async function LibraryPage() {
 
                   <UploadDropzone courseId={course.id} />
 
-                  {course.documents.length > 0 && (
+                  {documents.length > 0 && (
                     <div className={styles.docList}>
-                      {course.documents.map((doc) => (
+                      {documents.map((doc) => (
                         <div key={doc.id} className={styles.docRow}>
                           <FileText size={14} />
                           <span className={styles.docTitle}>{doc.title}</span>
@@ -203,7 +205,7 @@ export default async function LibraryPage() {
                     <ArtifactGenerator courseId={course.id} courseName={course.name} />
 
                     <StudyArtifactsList
-                      artifacts={[...course.study_artifacts].sort(
+                      artifacts={[...studyArtifacts].sort(
                         (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
                       )}
                       isOwner={isOwner}

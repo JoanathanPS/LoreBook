@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { processDocument } from "@/lib/ingest/pipeline";
 
-export const maxDuration = 60;
+// Document extraction + embedding can exceed the default route budget,
+// especially on larger files and free-tier model retries.
+export const maxDuration = 300;
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
