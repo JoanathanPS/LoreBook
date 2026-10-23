@@ -6,6 +6,15 @@ import { createClient } from "@/lib/supabase/server";
 export const maxDuration = 300;
 export const runtime = "nodejs";
 
+function isUserInputProcessingError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("appears corrupted") ||
+    lower.includes("unsupported internal structure") ||
+    lower.includes("no extractable content")
+  );
+}
+
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = await createClient();
@@ -22,6 +31,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   } catch (err) {
     console.error("[documents/process] fatal error:", err);
     const message = err instanceof Error ? err.message : "Processing failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = isUserInputProcessingError(message) ? 422 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
