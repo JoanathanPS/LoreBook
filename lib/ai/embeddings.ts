@@ -33,6 +33,21 @@ export class EmbeddingConfigError extends Error {
   override name = "EmbeddingConfigError";
 }
 
+/** Quota or rate limit hit after the allowed retries. Callers can retry later. */
+export class EmbeddingRateLimitError extends Error {
+  override name = "EmbeddingRateLimitError";
+  constructor(message: string, readonly retryAfterMs: number | null = null) {
+    super(message);
+  }
+}
+
+export interface EmbedOptions {
+  /** Retries after the first attempt. Default 3. */
+  maxRetries?: number;
+  /** Longest single wait between retries. Default 20s. */
+  maxWaitMs?: number;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -88,7 +103,13 @@ function retryDelayFrom(errText: string): number | null {
   }
 }
 
-async function embedBatch(texts: string[], taskType: TaskType): Promise<number[][]> {
+async function embedBatch(
+  texts: string[],
+  taskType: TaskType,
+  options: EmbedOptions = {},
+): Promise<number[][]> {
+  const maxRetries = options.maxRetries ?? MAX_RETRIES;
+  const maxWaitMs = options.maxWaitMs ?? MAX_WAIT_MS;
   const key = apiKey();
   const url = `https://generativelanguage.googleapis.com/v1beta/${EMBEDDING_MODEL}:batchEmbedContents`;
   const body = JSON.stringify({
@@ -100,7 +121,7 @@ async function embedBatch(texts: string[], taskType: TaskType): Promise<number[]
     })),
   });
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     let res: Response;
     try {
       res = await fetch(url, {
@@ -109,7 +130,7 @@ async function embedBatch(texts: string[], taskType: TaskType): Promise<number[]
         body,
       });
     } catch (err) {
-      if (attempt === MAX_RETRIES) throw err;
+      if (attempt === maxRetries) throw err;
       await sleep(Math.min(1000 * 2 ** attempt, 10_000));
       continue;
     }
@@ -130,10 +151,11 @@ async function embedBatch(texts: string[], taskType: TaskType): Promise<number[]
     }
 
     const retryable = res.status === 429 || res.status >= 500;
-    if (!retryable || attempt === MAX_RETRIES) {
+    if (!retryable || attempt === maxRetries) {
       if (res.status === 429) {
-        throw new Error(
+        throw new EmbeddingRateLimitError(
           "The embedding service's free-tier quota is used up for now. Wait a minute and retry this document.",
+          retryDelayFrom(errText),
         );
       }
       throw new Error(`Embedding request failed (${res.status}): ${errText.slice(0, 300)}`);
@@ -141,7 +163,7 @@ async function embedBatch(texts: string[], taskType: TaskType): Promise<number[]
 
     const suggested = retryDelayFrom(errText);
     const backoff = res.status === 429 ? 15_000 : Math.min(1000 * 2 ** attempt, 10_000);
-    await sleep(Math.min(suggested ?? backoff, MAX_WAIT_MS));
+    await sleep(Math.min(suggested ?? backoff, maxWaitMs));
   }
 
   throw new Error("Embedding request failed after retries.");
@@ -164,6 +186,23 @@ function packBatches(texts: string[]): string[][] {
   }
   if (current.length) batches.push(current);
   return batches;
+}
+
+/**
+ * How many of `texts` (taken from the front) fit in one batch request.
+ * The ingest worker embeds exactly one request's worth per step.
+ */
+export function firstBatchSize(texts: string[]): number {
+  return packBatches(texts)[0]?.length ?? 0;
+}
+
+/** Embed one request's worth of chunks. `texts` must fit in one batch. */
+export async function embedDocumentBatch(
+  texts: string[],
+  options?: EmbedOptions,
+): Promise<number[][]> {
+  if (texts.length === 0) return [];
+  return embedBatch(texts, "RETRIEVAL_DOCUMENT", options);
 }
 
 /** Embed chunks that will be stored and searched against later. */
