@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileText,
   LayoutDashboard,
   Library,
   MessagesSquare,
+  RotateCw,
   Share2,
   Sparkles,
 } from "lucide-react";
@@ -30,17 +31,54 @@ interface SearchData {
 const EMPTY: SearchData = { courses: [], documents: [], concepts: [], artifacts: [] };
 export const OPEN_COMMAND_PALETTE_EVENT = "lorebook:open-command-palette";
 
+type LoadState = "idle" | "loading" | "ready" | "error";
+
 export function CommandPalette() {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
   const [data, setData] = useState<SearchData>(EMPTY);
-  const [loaded, setLoaded] = useState(false);
+  const [loadState, setLoadState] = useState<LoadState>("idle");
+  const openRef = useRef(false);
+  const requestRef = useRef<AbortController | null>(null);
+
+  // Refetch every time the palette opens so new courses, documents and
+  // generated material show up; keep the previous results visible meanwhile.
+  const load = useCallback(() => {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setLoadState("loading");
+    fetch("/api/search", { cache: "no-store", signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return (await res.json()) as SearchData;
+      })
+      .then((json) => {
+        setData({ ...EMPTY, ...json });
+        setLoadState("ready");
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        console.error("command palette search failed", err);
+        setLoadState("error");
+      });
+  }, []);
+
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (next && !openRef.current) load();
+      if (!next) requestRef.current?.abort();
+      openRef.current = next;
+      setOpenState(next);
+    },
+    [load],
+  );
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((o) => !o);
+        setOpen(!openRef.current);
       }
     }
     function onOpenEvent() {
@@ -52,19 +90,9 @@ export function CommandPalette() {
       document.removeEventListener("keydown", onKeyDown);
       window.removeEventListener(OPEN_COMMAND_PALETTE_EVENT, onOpenEvent);
     };
-  }, []);
+  }, [setOpen]);
 
-  useEffect(() => {
-    if (open && !loaded) {
-      fetch("/api/search")
-        .then((res) => res.json())
-        .then((json) => {
-          setData(json);
-          setLoaded(true);
-        })
-        .catch(() => {});
-    }
-  }, [open, loaded]);
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   function go(href: string) {
     setOpen(false);
@@ -75,7 +103,16 @@ export function CommandPalette() {
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Jump to a course, document, concept, or page…" />
       <CommandList>
-        <CommandEmpty>No results.</CommandEmpty>
+        <CommandEmpty>{loadState === "loading" ? "Searching…" : "No results."}</CommandEmpty>
+
+        {loadState === "error" && (
+          <CommandGroup heading="Search unavailable">
+            <CommandItem value="retry search couldn't load" onSelect={load}>
+              <RotateCw />
+              Couldn&apos;t load your courses and material — retry
+            </CommandItem>
+          </CommandGroup>
+        )}
 
         <CommandGroup heading="Go to">
           <CommandItem onSelect={() => go("/library")}>

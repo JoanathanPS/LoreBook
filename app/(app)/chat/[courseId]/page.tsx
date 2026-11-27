@@ -28,13 +28,14 @@ export default async function ChatPage({
       .from("chat_messages")
       .select("id, role, content, metadata, created_at")
       .eq("course_id", courseId)
-      .order("created_at", { ascending: true })
+      // Newest 100, reversed below into chronological order.
+      .order("created_at", { ascending: false })
       .limit(100),
   ]);
 
   if (!course) notFound();
 
-  const initialMessages = (historyMessages ?? []).map((m) => ({
+  const initialMessages = [...(historyMessages ?? [])].reverse().map((m) => ({
     id: m.id,
     role: m.role as "user" | "assistant" | "system",
     parts: [{ type: "text" as const, text: m.content }],
