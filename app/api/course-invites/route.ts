@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+export const maxDuration = 15;
+
 export async function POST(request: Request) {
-  const { courseId } = (await request.json()) as { courseId: string };
+  const body = (await request.json().catch(() => null)) as { courseId?: string } | null;
+  const courseId = body?.courseId;
+  if (!courseId) return NextResponse.json({ error: "courseId is required" }, { status: 400 });
 
   const supabase = await createClient();
   const {
@@ -17,7 +21,14 @@ export async function POST(request: Request) {
     .single();
 
   if (error || !invite) {
-    return NextResponse.json({ error: error?.message ?? "Could not create invite" }, { status: 500 });
+    if (error?.code === "42501") {
+      return NextResponse.json(
+        { error: "Only the course owner can create invite links." },
+        { status: 403 },
+      );
+    }
+    console.error("invite create failed", error);
+    return NextResponse.json({ error: "Could not create an invite link. Try again." }, { status: 500 });
   }
 
   return NextResponse.json({ id: invite.id });

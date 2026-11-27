@@ -10,14 +10,14 @@ import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UploadDropzone } from "@/components/library/UploadDropzone";
-import { DocumentStatusBadge } from "@/components/library/DocumentStatusBadge";
 import { ArtifactGenerator } from "@/components/library/ArtifactGenerator";
 import { StudyArtifactsList, type ArtifactItem } from "@/components/library/StudyArtifactsList";
 import { CommandPaletteTrigger } from "@/components/command/CommandPaletteTrigger";
 import { SoundToggle } from "@/components/audio/SoundToggle";
 import { InviteButton } from "@/components/collab/InviteButton";
 import { DeleteCourseButton } from "@/components/library/DeleteCourseButton";
-import { DocumentRowActions } from "@/components/library/DocumentRowActions";
+import { DocumentLiveProvider } from "@/components/library/DocumentLiveProvider";
+import { LiveDocumentStatus } from "@/components/library/LiveDocumentStatus";
 import { courseAccent } from "@/lib/study/course-accent";
 import styles from "./page.module.css";
 
@@ -26,6 +26,9 @@ interface DocumentRow {
   title: string;
   type: string;
   status: string;
+  stage: string | null;
+  progress: number | null;
+  processing_started_at: string | null;
   error_message: string | null;
   user_id: string;
   document_chunks: { count: number }[];
@@ -47,7 +50,7 @@ export default async function LibraryPage() {
   const { data: courses, error: coursesError } = await supabase
     .from("courses")
     .select(
-      "id, name, user_id, documents(id, title, type, status, error_message, user_id, document_chunks(count)), study_artifacts(id, kind, title, status, created_at)",
+      "id, name, user_id, documents(id, title, type, status, stage, progress, processing_started_at, error_message, user_id, document_chunks(count)), study_artifacts(id, kind, title, status, created_at)",
     )
     .order("created_at", { ascending: true })
     .returns<CourseRow[]>();
@@ -95,6 +98,7 @@ export default async function LibraryPage() {
           </div>
         </header>
 
+        <DocumentLiveProvider userId={user.id}>
         <main className={styles.main}>
           <h1 className={styles.title}>The shelf.</h1>
 
@@ -176,21 +180,19 @@ export default async function LibraryPage() {
                           <FileText size={14} />
                           <span className={styles.docTitle}>{doc.title}</span>
                           <span className={styles.docType}>{doc.type}</span>
-                          {doc.status === "error" && doc.error_message ? (
-                            <span className={styles.docError}>{doc.error_message}</span>
-                          ) : doc.status === "ready" ? (
-                            <span className={styles.docMeta}>
-                              {doc.document_chunks[0]?.count ?? 0} chunks
-                            </span>
-                          ) : null}
-                          <DocumentStatusBadge status={doc.status} />
-                          {doc.user_id === user.id && (
-                            <DocumentRowActions
-                              documentId={doc.id}
-                              documentTitle={doc.title}
-                              status={doc.status}
-                            />
-                          )}
+                          <LiveDocumentStatus
+                            initial={{
+                              id: doc.id,
+                              status: doc.status,
+                              stage: doc.stage,
+                              progress: doc.progress ?? 0,
+                              error_message: doc.error_message,
+                              processing_started_at: doc.processing_started_at,
+                            }}
+                            title={doc.title}
+                            chunkCount={doc.document_chunks[0]?.count ?? 0}
+                            canManage={doc.user_id === user.id}
+                          />
                         </div>
                       ))}
                     </div>
@@ -216,6 +218,7 @@ export default async function LibraryPage() {
             </div>
           )}
         </main>
+        </DocumentLiveProvider>
       </div>
     </>
   );

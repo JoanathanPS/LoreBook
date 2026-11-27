@@ -20,7 +20,7 @@ The core idea is good: cited answers over your own material, turned into practic
 |---|-----|--------|
 | 0.1 | Make the embedding provider single-model with a hard dimension check, so it can never silently fall back to another model (`lib/ai/embeddings.ts`) | **Done** |
 | 0.2 | Pack batches by token budget, use `taskType` RETRIEVAL_DOCUMENT/QUERY, send the key in a header instead of the URL, and fail fast so it stays inside the function timeout | **Done** |
-| 0.3 | Long documents: keep an even spread of chunks instead of the first 40 only; the cap is set by `MAX_CHUNKS_PER_DOC` (default 60) | **Done** |
+| 0.3 | Long documents: keep an even spread of chunks instead of the first 40 only; the cap is set by `MAX_CHUNKS_PER_DOC` (default 60) | **Done**, then superseded: Phase 1's queue removed the cap |
 | 0.4 | Mark a document `ready` before the optional concept tagging runs | **Done** |
 | 0.5 | Return 503 with a clear message for config and quota errors, instead of a raw 500 | **Done** |
 | 0.6 | Hero CTA jitter: the magnetic effect moved the element it was measuring | **Done** |
@@ -68,6 +68,35 @@ Changing models means re-embedding everything, so add an `embedding_model` colum
 - The mind map links every document to every concept (`lib/study/generate-course-curriculum.ts:233`), which makes the exam predictor meaningless.
 - Images: replace the dead Groq vision fallback (`lib/ai/groq.ts:113`).
 - Audio: check the 25 MB Whisper limit before uploading, and drop `.mov`, `.doc` and `.ppt` from accepted types until they are handled.
+
+### Phase 1 status: job queue shipped. What the owner must run
+
+The code is in place (`supabase/migrations/0018_ingest_jobs.sql`, `lib/ingest/pipeline.ts`, `lib/ingest/worker.ts`, `app/api/ingest/tick/route.ts`). Until steps 1 and 2 are done, uploads queue up but nothing processes them.
+
+1. **Apply the migration.** In the Supabase SQL editor run `supabase/migrations/0018_ingest_jobs.sql` (it is safe to re-run). It adds `documents.stage`, `progress`, `processing_started_at` and `content_sha256`, plus `document_chunks.embedding_model`, a nullable `embedding`, the `ingest_jobs` table, and the functions `enqueue_ingest_job`, `claim_ingest_job`, `set_chunk_embeddings` and `copy_document_chunks`. It also adds `documents` to the `supabase_realtime` publication.
+2. **Set two env vars** in Vercel (Production and Preview) and in `.env.local`, then redeploy:
+   - `SUPABASE_SERVICE_ROLE_KEY`: Supabase > Project Settings > API > `service_role`. Server only.
+   - `CRON_SECRET`: any long random string (`openssl rand -hex 32`).
+3. **Cron.** `vercel.json` registers `/api/ingest/tick` as a **daily** Vercel Cron, a safety net that is valid on the Hobby plan (Hobby rejects more frequent crons). Day-to-day work does not depend on it: every upload or retry starts processing at once, and a tick that runs out of time chains the next tick itself. For a frequent sweep that picks up rate-limited or crashed jobs within a minute, pick **one** of these:
+   - On Vercel Pro, change the schedule in `vercel.json` to `* * * * *`.
+   - On any plan, ping the tick every minute from Supabase (Database > Extensions: enable `pg_cron` and `pg_net`). Replace the domain and the secret:
+
+     ```sql
+     select vault.create_secret('<CRON_SECRET>', 'ingest_cron_secret');
+     select cron.schedule('ingest-tick', '* * * * *', $$
+       select net.http_post(
+         url := 'https://<your-production-domain>/api/ingest/tick?background=1',
+         headers := jsonb_build_object(
+           'Authorization',
+           'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'ingest_cron_secret')
+         )
+       );
+     $$);
+     ```
+4. **Old stuck rows.** Documents left in `processing` by the old pipeline show a Retry button in the library. Retrying puts them on the queue.
+5. `MAX_CHUNKS_PER_DOC` is no longer read and can be removed from the environment.
+
+How it behaves: an upload returns at once. The worker extracts and chunks the file (every chunk is kept), embeds one Gemini batch per step, and marks the document `ready` once every chunk has an embedding. Concept tagging then runs and never blocks `ready`. A rate limit moves the job back to the queue for at least a minute without counting as a failure. Five failed steps in a row mark the document `error`. A job whose worker died is re-claimed after 10 minutes. Uploading the same file again (same sha256, same user) copies the existing chunks and embeddings instead of re-embedding.
 
 ## Phase 2: make it feel fast (1 week)
 

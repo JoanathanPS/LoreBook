@@ -19,16 +19,19 @@ export function DocumentRowActions({
   documentId,
   documentTitle,
   status,
+  canRetry: canRetryOverride,
 }: {
   documentId: string;
   documentTitle: string;
   status: string;
+  /** Override, e.g. to offer retry for a row stuck in 'processing'. */
+  canRetry?: boolean;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [retryPending, startRetry] = useTransition();
   const [deletePending, startDelete] = useTransition();
 
-  const canRetry = status === "uploaded" || status === "error";
+  const canRetry = canRetryOverride ?? (status === "uploaded" || status === "error");
 
   function handleDelete() {
     const form = new FormData();

@@ -1,8 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { detectDocumentType } from "@/lib/ingest/detect-type";
+import { enqueueDocument, workerConfigured } from "@/lib/ingest/enqueue";
+import { kickIngest } from "@/lib/ingest/worker";
 
+// The request itself returns as soon as the document is queued. maxDuration
+// covers the after() kick that starts processing straight away, so small
+// files are ready in seconds instead of waiting for the next cron tick.
 export const maxDuration = 60;
+export const runtime = "nodejs";
+
+/** Queue the new document and start working on it after the response is sent. */
+async function enqueueAndKick(supabase: SupabaseClient, request: Request, documentId: string) {
+  await enqueueDocument(supabase, documentId);
+  if (workerConfigured()) {
+    const origin = new URL(request.url).origin;
+    after(() => kickIngest(documentId, origin));
+  } else {
+    console.warn("[upload] SUPABASE_SERVICE_ROLE_KEY missing: document queued but no worker can run.");
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -57,7 +75,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Database error: ${insertError.message}` }, { status: 500 });
       }
 
-      return NextResponse.json({ document: doc });
+      await enqueueAndKick(supabase, request, doc.id);
+      return NextResponse.json({ document: { ...doc, status: "processing", stage: "queued" } });
     }
 
     // Fallback: FormData upload
@@ -110,7 +129,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Database error: ${insertError.message}` }, { status: 500 });
     }
 
-    return NextResponse.json({ document: doc });
+    await enqueueAndKick(supabase, request, doc.id);
+    return NextResponse.json({ document: { ...doc, status: "processing", stage: "queued" } });
   } catch (err) {
     console.error("[upload] fatal error:", err);
     const message = err instanceof Error ? err.message : "Document upload failed";

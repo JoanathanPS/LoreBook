@@ -7,6 +7,8 @@ import { withRetry } from "@/lib/ai/retry";
 
 const MODEL = groq("openai/gpt-oss-120b");
 
+export const maxDuration = 60;
+
 const exploreSchema = z.object({
   summary: z
     .string()

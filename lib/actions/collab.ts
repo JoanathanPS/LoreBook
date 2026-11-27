@@ -3,20 +3,30 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export async function joinCourse(formData: FormData) {
+export type JoinState = { error: string | null };
+
+/**
+ * Accepts a course invite. Validation (invite exists, matches the course,
+ * not expired, not used up) happens in the accept_course_invite RPC — it is
+ * the only way to become a course member.
+ */
+export async function joinCourse(_prev: JoinState, formData: FormData): Promise<JoinState> {
+  const inviteId = String(formData.get("inviteId") ?? "");
   const courseId = String(formData.get("courseId") ?? "");
-  if (!courseId) return;
+  if (!inviteId || !courseId) return { error: "This invite link is incomplete." };
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(`/login?redirectTo=/join/${inviteId}`);
 
-  await supabase.from("course_members").upsert(
-    { course_id: courseId, user_id: user.id },
-    { onConflict: "course_id,user_id", ignoreDuplicates: true },
-  );
+  const { data: joinedCourseId, error } = await supabase.rpc("accept_course_invite", {
+    p_invite_id: inviteId,
+    p_course_id: courseId,
+  });
 
-  redirect("/library");
+  if (error) return { error: error.message };
+
+  redirect(`/chat/${joinedCourseId ?? courseId}`);
 }

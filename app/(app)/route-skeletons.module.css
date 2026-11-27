@@ -1,0 +1,124 @@
+/* Layout-matched skeletons for the heaviest routes, so the swap from the
+   loading state to the real page doesn't shift anything. */
+
+/* ---- chat: sidebar + message column + composer (ChatPanel.module.css) ---- */
+.chat {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 17.5rem 1fr;
+}
+.chatSidebar {
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 1.25rem;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+.chatMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.chatMessages {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+  width: 100%;
+  max-width: 52rem;
+  margin-inline: auto;
+}
+.bubbleUser {
+  justify-self: end;
+  width: min(60%, 24rem);
+  height: 2.75rem;
+  border-radius: 1rem;
+}
+.bubbleAssistant {
+  width: min(85%, 40rem);
+  height: 6.5rem;
+  border-radius: 1rem;
+}
+.chatComposer {
+  padding: 1rem 2.5rem 1.5rem;
+  width: 100%;
+  max-width: 52rem;
+  margin-inline: auto;
+}
+@media (max-width: 900px) {
+  .chat {
+    grid-template-columns: 1fr;
+  }
+  .chatSidebar {
+    display: none;
+  }
+}
+@media (max-width: 680px) {
+  .chatMessages,
+  .chatComposer {
+    padding-inline: 1rem;
+  }
+}
+
+/* ---- document: centered reader column (document/[id]/page.module.css) ---- */
+.doc {
+  min-height: 100dvh;
+  padding: 2.5rem 1.5rem;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+}
+.docInner {
+  width: 100%;
+  max-width: 60rem;
+  display: grid;
+  gap: 1.5rem;
+}
+.docHeaderRow {
+  display: flex;
+  justify-content: space-between;
+}
+.docPage {
+  height: min(70dvh, 48rem);
+  border-radius: var(--radius-lg);
+}
+
+/* ---- graph: header bar + canvas + inspector (ConceptGraphView.module.css) ---- */
+.graph {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+.graphHeader {
+  padding: 1rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.graphBody {
+  display: grid;
+  grid-template-columns: 1fr 24rem;
+  height: calc(100dvh - 5.5rem);
+}
+.graphCanvas {
+  margin: 1.25rem;
+  border-radius: var(--radius-lg);
+}
+.graphPanel {
+  border-left: 1px solid var(--border);
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+@media (max-width: 960px) {
+  .graphBody {
+    grid-template-columns: 1fr;
+  }
+  .graphPanel {
+    display: none;
+  }
+}

@@ -1,30 +1,40 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { ProgressBar } from "./ProgressBar";
+import { stageLabel, useLiveDocument, useLiveSeed } from "./DocumentLiveProvider";
 import styles from "./UploadDropzone.module.css";
 
 interface UploadItem {
+  key: string;
   name: string;
-  status: "uploading" | "processing" | "done" | "error";
+  /** Local phase. Once "queued", live state from the worker takes over. */
+  status: "uploading" | "queued" | "error";
+  documentId?: string;
   message?: string;
 }
 
+/**
+ * Upload = store the file, register the row, and return. The server queues
+ * the document and the ingest worker processes it in bounded steps; this
+ * component just follows stage and progress over Supabase Realtime.
+ */
 export function UploadDropzone({ courseId }: { courseId: string }) {
   const router = useRouter();
+  const seed = useLiveSeed();
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<UploadItem[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [isExamPaper, setIsExamPaper] = useState(false);
 
   async function uploadOne(file: File) {
-    setItems((prev) => [...prev, { name: file.name, status: "uploading" }]);
+    const key = crypto.randomUUID();
+    setItems((prev) => [...prev, { key, name: file.name, status: "uploading" }]);
     const update = (patch: Partial<UploadItem>) =>
-      setItems((prev) =>
-        prev.map((it) => (it.name === file.name ? { ...it, ...patch } : it)),
-      );
+      setItems((prev) => prev.map((it) => (it.key === key ? { ...it, ...patch } : it)));
 
     try {
       const supabase = createClient();
@@ -48,7 +58,7 @@ export function UploadDropzone({ courseId }: { courseId: string }) {
         throw new Error(`Storage upload failed: ${storageError.message}`);
       }
 
-      // 2. Register document record in PostgreSQL
+      // 2. Register the document; the server queues it and returns right away.
       const uploadRes = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,40 +82,27 @@ export function UploadDropzone({ courseId }: { courseId: string }) {
       }
       if (!uploadRes.ok) throw new Error(uploadJson.error ?? "Upload failed");
 
-      // 3. Trigger processing pipeline
-      update({ status: "processing" });
-      router.refresh();
-
-      const processRes = await fetch(`/api/documents/${documentId}/process`, {
-        method: "POST",
+      // 3. Follow progress live (the row also appears in the list below).
+      seed?.({
+        id: documentId,
+        status: "processing",
+        stage: "queued",
+        progress: 0,
+        error_message: null,
+        processing_started_at: new Date().toISOString(),
       });
-      const processText = await processRes.text();
-      let processJson: { error?: string } = {};
-      try {
-        processJson = JSON.parse(processText);
-      } catch {
-        throw new Error(
-          `Processing server error (${processRes.status}): ${processText.slice(0, 100)}`,
-        );
-      }
-      if (!processRes.ok) throw new Error(processJson.error ?? "Processing failed");
-
-      update({ status: "done" });
-      setTimeout(() => {
-        setItems((prev) => prev.filter((it) => it.name !== file.name));
-      }, 1000);
+      update({ status: "queued", documentId });
+      router.refresh();
     } catch (err) {
       update({
         status: "error",
         message: err instanceof Error ? err.message : "Something went wrong",
       });
-    } finally {
-      router.refresh();
     }
   }
 
-  function removeItem(name: string) {
-    setItems((prev) => prev.filter((it) => it.name !== name));
+  function removeItem(key: string) {
+    setItems((prev) => prev.filter((it) => it.key !== key));
   }
 
   function handleFiles(fileList: FileList | null) {
@@ -153,28 +150,62 @@ export function UploadDropzone({ courseId }: { courseId: string }) {
       {items.length > 0 && (
         <ul className={styles.uploadList}>
           {items.map((item) => (
-            <li key={item.name} className={styles.uploadItem}>
-              {item.status !== "done" && item.status !== "error" ? (
-                <Loader2 size={13} className={styles.spinner} />
-              ) : null}
-              <span className={styles.uploadName}>{item.name}</span>
-              <span className={styles.uploadStatus} data-status={item.status}>
-                {item.status === "error" ? item.message : item.status}
-              </span>
-              {item.status === "error" && (
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.name)}
-                  className={styles.dismissBtn}
-                  title="Dismiss"
-                >
-                  ✕
-                </button>
-              )}
-            </li>
+            <UploadRow key={item.key} item={item} onDismiss={() => removeItem(item.key)} />
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function UploadRow({ item, onDismiss }: { item: UploadItem; onDismiss: () => void }) {
+  const live = useLiveDocument(item.documentId);
+
+  const failed = item.status === "error" || live?.status === "error";
+  const ready = live?.status === "ready";
+  const message = item.status === "error" ? item.message : live?.error_message;
+
+  // Ready rows live on in the document list; drop them from here shortly after.
+  const dismissRef = useRef(onDismiss);
+  useEffect(() => {
+    dismissRef.current = onDismiss;
+  });
+  useEffect(() => {
+    if (!ready) return;
+    const timer = setTimeout(() => dismissRef.current(), 1500);
+    return () => clearTimeout(timer);
+  }, [ready]);
+
+  let label: string;
+  if (item.status === "uploading") label = "uploading";
+  else if (failed) label = message ?? "processing failed";
+  else if (live) label = stageLabel(live);
+  else label = "queued";
+
+  const showBar = !failed && !ready && item.status !== "uploading";
+
+  return (
+    <li className={styles.uploadItem}>
+      {!failed && !ready ? <Loader2 size={13} className={styles.spinner} /> : null}
+      <span className={styles.uploadName}>{item.name}</span>
+      {showBar && (
+        <ProgressBar
+          value={live?.stage === "embedding" ? live.progress : null}
+          label={`Processing ${item.name}`}
+        />
+      )}
+      <span
+        className={styles.uploadStatus}
+        data-status={failed ? "error" : ready ? "done" : item.status}
+        title={failed ? label : undefined}
+      >
+        {label}
+      </span>
+      {failed && (
+        <button type="button" onClick={onDismiss} className={styles.dismissBtn} title="Dismiss">
+          ✕
+        </button>
+      )}
+    </li>
   );
 }

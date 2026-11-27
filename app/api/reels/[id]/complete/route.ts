@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { nudgeMastery } from "@/lib/study/mastery";
 import { recordActivity } from "@/lib/study/streaks";
 
+export const maxDuration = 15;
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
