@@ -50,9 +50,10 @@ export async function processDocument(documentId: string): Promise<void> {
       })),
     );
 
-    // Keep processing time bounded to avoid API timeouts on large documents.
-    const MAX_CHUNKS_PER_DOC = 40;
-    const cappedChunkRows = chunkRows.slice(0, MAX_CHUNKS_PER_DOC);
+    // Keep processing time bounded on free-tier quotas. When a document has
+    // more chunks than the cap, keep an even spread across the whole file
+    // rather than only the first pages, so later chapters stay searchable.
+    const cappedChunkRows = spreadSample(chunkRows, maxChunksPerDoc());
 
     const embeddings = await embedDocuments(cappedChunkRows.map((c) => c.content));
 
@@ -82,6 +83,13 @@ export async function processDocument(documentId: string): Promise<void> {
       if (insertError) throw new Error(`Failed to save chunks: ${insertError.message}`);
     }
 
+    // The document is usable (chat, quizzes) as soon as chunks are stored, so
+    // mark it ready before the optional enrichment step instead of after.
+    await supabase
+      .from("documents")
+      .update({ status: "ready", error_message: null })
+      .eq("id", documentId);
+
     // Concept tagging is an enrichment, not core to ingestion succeeding —
     // don't fail the whole upload if this one step has trouble.
     try {
@@ -91,8 +99,6 @@ export async function processDocument(documentId: string): Promise<void> {
     } catch {
       // best-effort
     }
-
-    await supabase.from("documents").update({ status: "ready" }).eq("id", documentId);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown processing error";
     await supabase
@@ -101,6 +107,17 @@ export async function processDocument(documentId: string): Promise<void> {
       .eq("id", documentId);
     throw err;
   }
+}
+
+function maxChunksPerDoc(): number {
+  const fromEnv = Number(process.env.MAX_CHUNKS_PER_DOC);
+  return Number.isFinite(fromEnv) && fromEnv > 0 ? Math.floor(fromEnv) : 60;
+}
+
+function spreadSample<T>(items: T[], limit: number): T[] {
+  if (items.length <= limit) return items;
+  const step = items.length / limit;
+  return Array.from({ length: limit }, (_, i) => items[Math.floor(i * step)]);
 }
 
 async function extractSegments(

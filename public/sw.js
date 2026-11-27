@@ -4,7 +4,7 @@
 // webpack plugins, so a build-integrated SW generator wouldn't actually run.
 // A plain static file has no such dependency.
 
-const CACHE_NAME = "lorebook-v2";
+const CACHE_NAME = "lorebook-v3";
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -43,9 +43,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Pages (navigations + same-origin GETs) — network-first, cached fallback
-  // for offline access to anything you've already opened (a deck, a Reel,
-  // a quiz), never serving stale content while online.
+  // Only full page loads get the offline fallback. Client-side navigations
+  // (RSC payloads, prefetches) go straight to the network: intercepting them
+  // added a service-worker hop plus a cache write to every click.
+  if (request.mode !== "navigate") return;
+
+  // Network-first, cached fallback for offline access to pages already opened.
   event.respondWith(
     fetch(request)
       .then((res) => {

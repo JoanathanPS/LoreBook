@@ -32,14 +32,16 @@ export function Hero() {
 
         <div className={styles.ctaRow} data-anim="fade-up">
           <span data-magnetic className={styles.magneticWrap}>
-            <Button
-              render={<Link href="/login?mode=signup" />}
-              nativeButton={false}
-              size="lg"
-            >
-              Start your first chapter
-              <ArrowRight />
-            </Button>
+            <span className={styles.magneticInner}>
+              <Button
+                render={<Link href="/login?mode=signup" />}
+                nativeButton={false}
+                size="lg"
+              >
+                Start your first chapter
+                <ArrowRight />
+              </Button>
+            </span>
           </span>
           <Button
             render={<a href="#chapters" />}

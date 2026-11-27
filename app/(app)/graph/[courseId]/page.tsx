@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { ConceptGraphView } from "@/components/charts/ConceptGraphView";
 import type { GraphEdge, GraphNode, ArtifactRef, SourceDocRef } from "@/components/charts/types";
@@ -11,22 +12,14 @@ export default async function GraphPage({
 }) {
   const { courseId } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
-  const { data: course } = await supabase
-    .from("courses")
-    .select("id, name")
-    .eq("id", courseId)
-    .single();
+  const [{ data: course }, { data: concepts }] = await Promise.all([
+    supabase.from("courses").select("id, name").eq("id", courseId).single(),
+    supabase.from("concepts").select("id, name, parent_id, description, level, underlying_data").eq("course_id", courseId),
+  ]);
   if (!course) notFound();
-
-  const { data: concepts } = await supabase
-    .from("concepts")
-    .select("id, name, parent_id, description, level, underlying_data")
-    .eq("course_id", courseId);
 
   const conceptIds = (concepts ?? []).map((c) => c.id);
 

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { ReelPlayer } from "@/components/reels/ReelPlayer";
 import type { RecallQuestion } from "@/lib/ai/generate";
 
@@ -10,9 +11,7 @@ export default async function ReelPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const [

@@ -31,7 +31,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   } catch (err) {
     console.error("[documents/process] fatal error:", err);
     const message = err instanceof Error ? err.message : "Processing failed";
-    const status = isUserInputProcessingError(message) ? 422 : 500;
+    const isConfig = err instanceof Error && err.name === "EmbeddingConfigError";
+    const isQuota = /quota is used up|rate limited/i.test(message);
+    const status = isUserInputProcessingError(message)
+      ? 422
+      : isConfig || isQuota
+        ? 503
+        : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

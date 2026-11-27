@@ -103,14 +103,21 @@ export function LandingMotion() {
         });
       });
 
+      // The wrapper stays put and is what we measure and listen on; only its
+      // child moves. Moving and measuring the same element made the target
+      // chase the cursor, and the shifting hit area fired mouseleave at the
+      // edges, so the button jittered.
       document.querySelectorAll<HTMLElement>("[data-magnetic]").forEach((el) => {
-        const xTo = gsap.quickTo(el, "x", { duration: 0.4, ease: "power3" });
-        const yTo = gsap.quickTo(el, "y", { duration: 0.4, ease: "power3" });
+        const target = (el.firstElementChild as HTMLElement | null) ?? el;
+        const xTo = gsap.quickTo(target, "x", { duration: 0.5, ease: "power3.out" });
+        const yTo = gsap.quickTo(target, "y", { duration: 0.5, ease: "power3.out" });
+        const MAX_SHIFT = 6;
+        const clamp = gsap.utils.clamp(-MAX_SHIFT, MAX_SHIFT);
 
         const onMove = (e: MouseEvent) => {
           const rect = el.getBoundingClientRect();
-          xTo((e.clientX - (rect.left + rect.width / 2)) * 0.25);
-          yTo((e.clientY - (rect.top + rect.height / 2)) * 0.25);
+          xTo(clamp((e.clientX - (rect.left + rect.width / 2)) * 0.12));
+          yTo(clamp((e.clientY - (rect.top + rect.height / 2)) * 0.2));
         };
         const onLeave = () => {
           xTo(0);

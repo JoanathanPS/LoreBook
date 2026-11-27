@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { QuizRunner } from "@/components/study/QuizRunner";
 import type { QuizQuestion } from "@/lib/ai/generate";
@@ -11,9 +12,7 @@ export default async function QuizPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const { data: artifact } = await supabase

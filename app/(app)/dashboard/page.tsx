@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Flame, Library, Star, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { signOut } from "@/lib/actions/auth";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { Button } from "@/components/ui/button";
@@ -19,9 +20,7 @@ interface MasteryJoinRow {
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   let streakData = { current_streak: 0, longest_streak: 0, xp: 0 };
@@ -104,7 +103,7 @@ export default async function DashboardPage() {
       <div className={styles.wrap}>
         <header className={styles.header}>
           <div className={styles.headerInner}>
-            <Link href="/library" className={styles.brand} prefetch={false}>
+            <Link href="/library" className={styles.brand}>
               <Image
                 src="/brand/lore-header-v2.png"
                 alt="LoreBook"
@@ -117,11 +116,11 @@ export default async function DashboardPage() {
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
               <SoundToggle />
-              <Button render={<Link href="/library" prefetch={false} />} nativeButton={false} variant="ghost" size="sm">
+              <Button render={<Link href="/library" />} nativeButton={false} variant="ghost" size="sm">
                 <Library size={14} />
                 Library
               </Button>
-              <Button render={<Link href="/settings" prefetch={false} />} nativeButton={false} variant="ghost" size="sm">
+              <Button render={<Link href="/settings" />} nativeButton={false} variant="ghost" size="sm">
                 <Settings size={14} />
                 Settings
               </Button>

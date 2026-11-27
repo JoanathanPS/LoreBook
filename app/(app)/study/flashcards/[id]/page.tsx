@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { FlashcardReview } from "@/components/study/FlashcardReview";
 
@@ -10,25 +11,25 @@ export default async function FlashcardsPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
-  const { data: deck } = await supabase
-    .from("study_artifacts")
-    .select("id, title, status, error_message")
-    .eq("id", id)
-    .single();
+  const [{ data: deck }, { data: cardsWithTopic, error: cardsError }] = await Promise.all([
+    supabase
+      .from("study_artifacts")
+      .select("id, title, status, error_message")
+      .eq("id", id)
+      .single(),
+    supabase
+      .from("flashcards")
+      .select("id, topic, front, back")
+      .eq("deck_id", id)
+      .order("due_at", { ascending: true }),
+  ]);
 
   if (!deck) notFound();
 
   let cards: Array<{ id: string; topic: string; front: string; back: string }> = [];
-  const { data: cardsWithTopic, error: cardsError } = await supabase
-    .from("flashcards")
-    .select("id, topic, front, back")
-    .eq("deck_id", id)
-    .order("due_at", { ascending: true });
 
   if (cardsError) {
     console.warn("Failed to query flashcards with topic, falling back without topic column:", cardsError.message);

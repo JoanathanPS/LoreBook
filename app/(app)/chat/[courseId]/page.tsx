@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 
 export default async function ChatPage({
@@ -9,9 +10,7 @@ export default async function ChatPage({
 }) {
   const { courseId } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const [{ data: course }, { data: concepts }, { data: historyMessages }] = await Promise.all([

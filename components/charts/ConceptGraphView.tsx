@@ -235,7 +235,7 @@ export function ConceptGraphView({
       {/* Header Bar */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Link href="/library" className={styles.backLink} prefetch={false}>
+          <Link href="/library" className={styles.backLink}>
             ← Back to library
           </Link>
           <div className={styles.titleRow}>
@@ -613,7 +613,7 @@ export function ConceptGraphView({
                           key={a.id}
                           href={artifactHref(a.kind, a.id)}
                           className={styles.artifactLink}
-                          prefetch={false}
+                         
                         >
                           <span className={styles.artifactTitle}>{a.title}</span>
                           <span className={styles.artifactKind}>{a.kind}</span>
@@ -630,7 +630,7 @@ export function ConceptGraphView({
                       selected.name
                     )}" and its underlying mechanisms in detail.`}
                     className={styles.tutorLinkBtn}
-                    prefetch={false}
+                   
                   >
                     <MessageSquare size={14} />
                     Ask AI Tutor about {selected.name}

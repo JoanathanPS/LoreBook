@@ -61,9 +61,11 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims refreshes an expired session (writing new cookies via setAll)
+  // and verifies the JWT, locally when the project uses asymmetric signing
+  // keys, so most navigations skip the Auth server round trip getUser needs.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? data.claims : null;
 
   if (!user && isProtected) {
     const redirectUrl = new URL("/login", request.url);

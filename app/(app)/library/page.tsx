@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { FileText, MessageSquare, Sparkles, Share2, LayoutDashboard, Target, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { createCourse } from "@/lib/actions/courses";
 import { signOut } from "@/lib/actions/auth";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
@@ -40,9 +41,7 @@ interface CourseRow {
 
 export default async function LibraryPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const { data: courses, error: coursesError } = await supabase
@@ -79,11 +78,11 @@ export default async function LibraryPage() {
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <CommandPaletteTrigger />
               <SoundToggle />
-              <Button render={<Link href="/dashboard" prefetch={false} />} nativeButton={false} variant="ghost" size="sm">
+              <Button render={<Link href="/dashboard" />} nativeButton={false} variant="ghost" size="sm">
                 <LayoutDashboard size={14} />
                 Dashboard
               </Button>
-              <Button render={<Link href="/settings" prefetch={false} />} nativeButton={false} variant="ghost" size="sm">
+              <Button render={<Link href="/settings" />} nativeButton={false} variant="ghost" size="sm">
                 <Settings size={14} />
                 Settings
               </Button>
@@ -135,7 +134,7 @@ export default async function LibraryPage() {
                     </div>
                     <div className={styles.courseActions}>
                       <Button
-                        render={<Link href={`/chat/${course.id}`} prefetch={false} />}
+                        render={<Link href={`/chat/${course.id}`} />}
                         nativeButton={false}
                         variant="outline"
                         size="sm"
@@ -144,7 +143,7 @@ export default async function LibraryPage() {
                         Chat
                       </Button>
                       <Button
-                        render={<Link href={`/graph/${course.id}`} prefetch={false} />}
+                        render={<Link href={`/graph/${course.id}`} />}
                         nativeButton={false}
                         variant="outline"
                         size="sm"
@@ -153,7 +152,7 @@ export default async function LibraryPage() {
                         Graph
                       </Button>
                       <Button
-                        render={<Link href={`/predict/${course.id}`} prefetch={false} />}
+                        render={<Link href={`/predict/${course.id}`} />}
                         nativeButton={false}
                         variant="outline"
                         size="sm"

@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { MediaPlayer } from "@/components/document/MediaPlayer";
 import { SlideViewer } from "@/components/document/SlideViewer";
@@ -17,9 +18,7 @@ export default async function DocumentPage({
   const { id } = await params;
   const { t, page } = await searchParams;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const { data: doc } = await supabase
@@ -36,21 +35,19 @@ export default async function DocumentPage({
   const isPptx = doc.type === "pptx";
   const isDocxOrNote = doc.type === "docx" || doc.type === "note";
 
-  let signedUrl: string | null = null;
-  if (doc.storage_path) {
-    const { data } = await supabase.storage
-      .from("documents")
-      .createSignedUrl(doc.storage_path, 3600);
-    signedUrl = data?.signedUrl ?? null;
-  }
-
-  // Fetch document chunks for text/slide preview
-  const { data: chunks } = await supabase
-    .from("document_chunks")
-    .select("content, page_ref, chunk_index, timestamp_ref")
-    .eq("document_id", id)
-    .order("chunk_index", { ascending: true })
-    .limit(100);
+  // The signed URL and the chunk preview are independent — fetch together.
+  const [signed, { data: chunks }] = await Promise.all([
+    doc.storage_path
+      ? supabase.storage.from("documents").createSignedUrl(doc.storage_path, 3600)
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("document_chunks")
+      .select("content, page_ref, chunk_index, timestamp_ref")
+      .eq("document_id", id)
+      .order("chunk_index", { ascending: true })
+      .limit(100),
+  ]);
+  const signedUrl: string | null = signed.data?.signedUrl ?? null;
 
   return (
     <>

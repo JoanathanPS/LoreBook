@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { SimpleMarkdown } from "@/components/study/SimpleMarkdown";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,9 +14,7 @@ export default async function SummaryPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const { data: artifact } = await supabase

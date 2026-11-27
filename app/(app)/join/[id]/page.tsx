@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session-user";
 import { GradientMesh } from "@/components/marketing/GradientMesh";
 import { Button } from "@/components/ui/button";
 import { joinCourse } from "@/lib/actions/collab";
@@ -12,9 +13,7 @@ export default async function JoinPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect(`/login?redirectTo=/join/${id}`);
 
   const { data: invite } = await supabase
