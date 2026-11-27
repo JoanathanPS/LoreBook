@@ -4,15 +4,21 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import type { QuizQuestion } from "@/lib/ai/generate";
 import styles from "./BattlePanel.module.css";
 
 type Status = "waiting" | "active" | "finished";
 
+/** A quiz question as the battle RPC returns it — no correct answer. */
+export interface BattleQuestion {
+  prompt: string;
+  choices: string[];
+}
+
 export function BattlePanel({
   battleId,
-  quizTitle,
-  questions,
+  initialTitle,
+  initialQuestions,
+  initialLoadError,
   currentUserId,
   initialHostId,
   initialGuestId,
@@ -20,8 +26,9 @@ export function BattlePanel({
   initialScores,
 }: {
   battleId: string;
-  quizTitle: string;
-  questions: QuizQuestion[];
+  initialTitle: string;
+  initialQuestions: BattleQuestion[];
+  initialLoadError: string | null;
   currentUserId: string;
   initialHostId: string;
   initialGuestId: string | null;
@@ -33,13 +40,20 @@ export function BattlePanel({
   const [guestId, setGuestId] = useState(initialGuestId);
   const [status, setStatus] = useState<Status>(initialStatus as Status);
   const [scores, setScores] = useState<Record<string, number>>(initialScores);
-  const [answers, setAnswers] = useState<(number | null)[]>(() => new Array(questions.length).fill(null));
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState(initialTitle);
+  const [questions, setQuestions] = useState<BattleQuestion[]>(initialQuestions);
+  const [answers, setAnswers] = useState<(number | null)[]>(() =>
+    new Array(initialQuestions.length).fill(null),
+  );
+  const [joining, setJoining] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [error, setError] = useState<string | null>(initialLoadError);
 
   const isHost = currentUserId === hostId;
   const opponentId = isHost ? guestId : hostId;
   const iAmIn = isHost || currentUserId === guestId;
+  const submitted = scores[currentUserId] !== undefined;
 
   useEffect(() => {
     const channel = supabase
@@ -65,41 +79,60 @@ export function BattlePanel({
     };
   }, [supabase, battleId]);
 
-  async function joinBattle() {
+  async function loadQuestions() {
+    setLoadingQuestions(true);
     setError(null);
-    const { error: joinError } = await supabase
-      .from("battle_sessions")
-      .update({ guest_id: currentUserId, status: "active" })
-      .eq("id", battleId)
-      .is("guest_id", null);
-    if (joinError) setError(joinError.message);
+    const { data, error: rpcError } = await supabase
+      .rpc("get_battle_questions", { p_battle_id: battleId })
+      .maybeSingle<{ title: string | null; questions: BattleQuestion[] | null }>();
+    setLoadingQuestions(false);
+    if (rpcError) {
+      setError(`Couldn't load the questions: ${rpcError.message}`);
+      return;
+    }
+    const qs = data?.questions ?? [];
+    if (data?.title) setTitle(data.title);
+    setQuestions(qs);
+    setAnswers(new Array(qs.length).fill(null));
+  }
+
+  async function joinBattle() {
+    setJoining(true);
+    setError(null);
+    const { error: joinError } = await supabase.rpc("join_battle", { p_battle_id: battleId });
+    setJoining(false);
+    if (joinError) {
+      setError(joinError.message);
+      return;
+    }
+    setGuestId(currentUserId);
+    setStatus("active");
+    await loadQuestions();
   }
 
   async function submitAnswers() {
-    const correctCount = questions.reduce(
-      (acc, q, i) => acc + (answers[i] === q.correctIndex ? 1 : 0),
-      0,
-    );
-    const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
-
-    const nextScores = { ...scores, [currentUserId]: score };
-    const bothIn = hostId && guestId && nextScores[hostId] !== undefined && nextScores[guestId] !== undefined;
-
-    const { error: submitError } = await supabase
-      .from("battle_sessions")
-      .update({ scores: nextScores, status: bothIn ? "finished" : "active" })
-      .eq("id", battleId);
-
-    if (submitError) setError(submitError.message);
-    else {
-      setScores(nextScores);
-      setSubmitted(true);
-      if (bothIn) setStatus("finished");
+    if (questions.length === 0 || answers.some((a) => a === null)) return;
+    setSubmitting(true);
+    setError(null);
+    const { data, error: submitError } = await supabase.rpc("submit_battle_answers", {
+      p_battle_id: battleId,
+      p_answers: answers,
+    });
+    setSubmitting(false);
+    if (submitError) {
+      setError(submitError.message);
+      return;
     }
+    const result = data as { status: Status; scores: Record<string, number> };
+    setScores(result.scores);
+    setStatus(result.status);
   }
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const allAnswered = answers.every((a) => a !== null);
+  const hasQuestions = questions.length > 0;
+  const allAnswered = hasQuestions && answers.every((a) => a !== null);
+  const myScore = scores[currentUserId];
+  const theirScore = opponentId ? scores[opponentId] : undefined;
 
   return (
     <div className={styles.wrap}>
@@ -107,7 +140,7 @@ export function BattlePanel({
         <Link href="/library" className={styles.backLink}>
           ← Back to library
         </Link>
-        <h1 className={styles.title}>⚔ Battle — {quizTitle}</h1>
+        <h1 className={styles.title}>⚔ Battle — {title}</h1>
 
         {error && <p className={styles.error}>{error}</p>}
 
@@ -121,7 +154,15 @@ export function BattlePanel({
         {status === "waiting" && !isHost && (
           <div className={styles.card}>
             <p className={styles.hint}>You&apos;ve been challenged to a quiz battle.</p>
-            <Button onClick={joinBattle}>Join battle</Button>
+            <Button onClick={joinBattle} disabled={joining}>
+              {joining ? "Joining…" : "Join battle"}
+            </Button>
+          </div>
+        )}
+
+        {!iAmIn && status !== "waiting" && (
+          <div className={styles.card}>
+            <p className={styles.hint}>This battle already has two players.</p>
           </div>
         )}
 
@@ -130,12 +171,12 @@ export function BattlePanel({
             <div className={styles.scoreboard}>
               <div className={styles.scoreEntry}>
                 <span className={styles.scoreLabel}>You</span>
-                <span className={styles.scoreValue}>{scores[currentUserId] ?? "—"}</span>
+                <span className={styles.scoreValue}>{myScore ?? "—"}</span>
               </div>
               <div className={styles.scoreEntry}>
                 <span className={styles.scoreLabel}>Opponent</span>
                 <span className={styles.scoreValue}>
-                  {opponentId ? (scores[opponentId] ?? "…") : "—"}
+                  {opponentId ? (theirScore ?? "…") : "—"}
                 </span>
               </div>
             </div>
@@ -143,16 +184,32 @@ export function BattlePanel({
             {status === "finished" ? (
               <div className={styles.card}>
                 <p className={styles.hint}>
-                  {scores[currentUserId] > (opponentId ? scores[opponentId] : -1)
-                    ? "You won 🎉"
-                    : scores[currentUserId] === (opponentId ? scores[opponentId] : -1)
-                      ? "It's a tie."
-                      : "Opponent won this one."}
+                  {theirScore === undefined || myScore === undefined
+                    ? "Battle over."
+                    : myScore > theirScore
+                      ? "You won 🎉"
+                      : myScore === theirScore
+                        ? "It's a tie."
+                        : "Opponent won this one."}
                 </p>
               </div>
             ) : submitted ? (
               <div className={styles.card}>
                 <p className={styles.hint}>Answers submitted — waiting for your opponent…</p>
+              </div>
+            ) : loadingQuestions ? (
+              <div className={styles.card}>
+                <p className={styles.hint}>Loading questions…</p>
+              </div>
+            ) : !hasQuestions ? (
+              <div className={styles.card}>
+                <p className={styles.hint}>
+                  The questions for this battle couldn&apos;t be loaded, so it can&apos;t be
+                  played yet.
+                </p>
+                <Button variant="outline" onClick={loadQuestions}>
+                  Try again
+                </Button>
               </div>
             ) : (
               <>
@@ -176,8 +233,8 @@ export function BattlePanel({
                     </div>
                   </div>
                 ))}
-                <Button disabled={!allAnswered} onClick={submitAnswers}>
-                  Submit answers
+                <Button disabled={!allAnswered || submitting} onClick={submitAnswers}>
+                  {submitting ? "Submitting…" : "Submit answers"}
                 </Button>
               </>
             )}

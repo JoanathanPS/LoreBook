@@ -40,19 +40,27 @@ export function QuizRunner({
   const [result, setResult] = useState<AttemptResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [startingBattle, setStartingBattle] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [battleError, setBattleError] = useState<string | null>(null);
 
-  const allAnswered = answers.every((a) => a !== null);
+  const allAnswered = questions.length > 0 && answers.every((a) => a !== null);
 
   async function startBattle() {
     setStartingBattle(true);
+    setBattleError(null);
     try {
       const res = await fetch("/api/battle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quizId, courseId }),
       });
-      const json = await res.json();
-      if (res.ok) router.push(`/battle/${json.id}`);
+      const json = (await res.json().catch(() => null)) as { id?: string; error?: string } | null;
+      if (!res.ok || !json?.id) {
+        throw new Error(json?.error ?? `Couldn't start a battle (HTTP ${res.status}).`);
+      }
+      router.push(`/battle/${json.id}`);
+    } catch (err) {
+      setBattleError(err instanceof Error ? err.message : "Couldn't start a battle.");
     } finally {
       setStartingBattle(false);
     }
@@ -60,16 +68,34 @@ export function QuizRunner({
 
   async function submit() {
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const res = await fetch(`/api/artifacts/${quizId}/attempt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),
       });
-      const json: AttemptResult = await res.json();
-      setResult(json);
-      if (json.score >= 0.5) playCorrect();
+      const json = (await res.json().catch(() => null)) as
+        | (Partial<AttemptResult> & { error?: string })
+        | null;
+      if (!res.ok || typeof json?.score !== "number") {
+        throw new Error(
+          json?.error ??
+            (res.status === 504
+              ? "Grading timed out. Please try again."
+              : `Grading failed (HTTP ${res.status}). Please try again.`),
+        );
+      }
+      const attempt = json as AttemptResult;
+      setResult(attempt);
+      if (attempt.score >= 0.5) playCorrect();
       else playIncorrect();
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error && err.message !== "Failed to fetch"
+          ? err.message
+          : "Couldn't reach the server. Check your connection and try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -104,6 +130,11 @@ export function QuizRunner({
         </div>
       )}
       {status === "error" && <p className={styles.error}>{errorMessage}</p>}
+      {battleError && (
+        <p className={styles.error} role="alert">
+          {battleError}
+        </p>
+      )}
 
       {status === "ready" && (
         <div className={styles.questions}>
@@ -143,9 +174,14 @@ export function QuizRunner({
             </div>
           ))}
 
+          {submitError && (
+            <p className={styles.error} role="alert">
+              {submitError}
+            </p>
+          )}
           {!result && (
             <Button disabled={!allAnswered || submitting} onClick={submit}>
-              {submitting ? "Grading…" : "Submit"}
+              {submitting ? "Grading…" : submitError ? "Try again" : "Submit"}
             </Button>
           )}
         </div>

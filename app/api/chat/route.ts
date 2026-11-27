@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     'For any math — formulas, equations, single variables/symbols like "θ" or "x_i" — wrap it in LaTeX delimiters: \\( ... \\) for inline math, \\[ ... \\] for a standalone equation on its own line. Never write bare LaTeX commands (e.g. \\bigl, \\frac, subscripts) outside these delimiters.';
 
   const system = isGreeting
-    ? `You are LoreBook's study assistant for ${courseId}. Greet the student warmly and ask how you can help with their studies. Do not add any citation numbers.`
+    ? `You are LoreBook's study assistant. Greet the student warmly and ask how you can help with their studies. Do not add any citation numbers.`
     : tutorMode
       ? `You are LoreBook's AI Tutor, running Socratic mode. This is a hard rule that overrides your normal instinct to be helpful by answering directly: you are FORBIDDEN from stating the answer to the student's question in your first reply to it, no matter how simple or directly they ask, and no matter what phrasing they use ("just tell me", "what is X", "explain Y").
 
