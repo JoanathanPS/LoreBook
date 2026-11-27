@@ -20,7 +20,12 @@ interface MasteryJoinRow {
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const user = await getSessionUser(supabase);
+  // The session check and the data read are independent (RLS scopes the read
+  // to the same JWT), so start both at once and redirect after.
+  const [user, { data: rpcSummary, error: rpcErr }] = await Promise.all([
+    getSessionUser(supabase),
+    supabase.rpc("get_dashboard_summary"),
+  ]);
   if (!user) redirect("/login");
 
   let streakData = { current_streak: 0, longest_streak: 0, xp: 0 };
@@ -30,9 +35,7 @@ export default async function DashboardPage() {
   let docCount = 0;
   let artCount = 0;
 
-  // 1. Single-roundtrip RPC query for instant response
-  const { data: rpcSummary, error: rpcErr } = await supabase.rpc("get_dashboard_summary");
-
+  // 1. Single-roundtrip RPC query (started above, alongside the session check)
   if (!rpcErr && rpcSummary) {
     const summary = rpcSummary as {
       streak?: { current_streak: number; longest_streak: number; xp: number };
