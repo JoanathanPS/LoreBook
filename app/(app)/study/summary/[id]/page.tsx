@@ -14,14 +14,17 @@ export default async function SummaryPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const user = await getSessionUser(supabase);
+  // The session check and the data read are independent (RLS scopes the read
+  // to the same JWT), so start both at once and redirect after.
+  const [user, { data: artifact }] = await Promise.all([
+    getSessionUser(supabase),
+    supabase
+      .from("study_artifacts")
+      .select("title, status, error_message, content")
+      .eq("id", id)
+      .single(),
+  ]);
   if (!user) redirect("/login");
-
-  const { data: artifact } = await supabase
-    .from("study_artifacts")
-    .select("title, status, error_message, content")
-    .eq("id", id)
-    .single();
 
   if (!artifact) notFound();
 

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -19,12 +20,35 @@ import {
   FileText,
   Flame,
 } from "lucide-react";
-import { ConceptGraph } from "./ConceptGraph";
 import type { ArtifactRef, GraphEdge, GraphNode, ConceptDrilldownData } from "./types";
 import { artifactHref } from "@/lib/study/artifact-links";
 import { masteryColor, riskColor, RISK_STOPS } from "@/lib/study/mastery-color";
 import { SimpleMarkdown } from "@/components/study/SimpleMarkdown";
 import styles from "./ConceptGraphView.module.css";
+
+// d3 + @xyflow/react are the heaviest client code in the app. Split them into
+// their own chunk so the header, legend and inspector paint first; the graph
+// is interactive-only, so there is nothing to server-render.
+const ConceptGraph = dynamic(() => import("./ConceptGraph").then((m) => m.ConceptGraph), {
+  ssr: false,
+  loading: () => (
+    <div
+      aria-busy="true"
+      style={{
+        flex: 1,
+        minHeight: "32rem",
+        borderRadius: "var(--radius-lg)",
+        background: "var(--muted)",
+        display: "grid",
+        placeItems: "center",
+        color: "var(--muted-foreground)",
+        fontSize: "0.875rem",
+      }}
+    >
+      Loading concept map…
+    </div>
+  ),
+});
 
 export function ConceptGraphView({
   courseId,
