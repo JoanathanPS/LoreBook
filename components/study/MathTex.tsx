@@ -1,4 +1,7 @@
 import katex from "katex";
+// Loaded here rather than in globals.css so only routes that render math
+// pay for the stylesheet (and its font-face rules).
+import "katex/dist/katex.min.css";
 
 /** Renders a LaTeX string via KaTeX — runs isomorphically (server or
  * client), no API/network call. throwOnError is off so malformed TeX from

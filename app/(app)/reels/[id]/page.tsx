@@ -11,13 +11,14 @@ export default async function ReelPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const user = await getSessionUser(supabase);
-  if (!user) redirect("/login");
-
+  // The session check and the data reads are independent (RLS scopes the
+  // reads to the same JWT), so start them all at once and redirect after.
   const [
+    user,
     { data: artifact },
     { data: cards },
   ] = await Promise.all([
+    getSessionUser(supabase),
     supabase
       .from("study_artifacts")
       .select("status, error_message, content")
@@ -30,6 +31,7 @@ export default async function ReelPage({
       .eq("reel_id", id)
       .order("order_index", { ascending: true }),
   ]);
+  if (!user) redirect("/login");
 
   if (!artifact) notFound();
 

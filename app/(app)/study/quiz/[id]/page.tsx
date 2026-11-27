@@ -12,14 +12,17 @@ export default async function QuizPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const user = await getSessionUser(supabase);
+  // The session check and the data read are independent (RLS scopes the read
+  // to the same JWT), so start both at once and redirect after.
+  const [user, { data: artifact }] = await Promise.all([
+    getSessionUser(supabase),
+    supabase
+      .from("study_artifacts")
+      .select("id, title, status, error_message, content, course_id")
+      .eq("id", id)
+      .single(),
+  ]);
   if (!user) redirect("/login");
-
-  const { data: artifact } = await supabase
-    .from("study_artifacts")
-    .select("id, title, status, error_message, content, course_id")
-    .eq("id", id)
-    .single();
 
   if (!artifact) notFound();
 

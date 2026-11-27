@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { joinCourse } from "@/lib/actions/collab";
 import styles from "./page.module.css";
 
+interface InviteRow {
+  id: string;
+  course_id: string;
+  courses: { name: string } | { name: string }[] | null;
+}
+
 export default async function JoinPage({
   params,
 }: {
@@ -13,22 +19,24 @@ export default async function JoinPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const user = await getSessionUser(supabase);
+  // The session check and the data read are independent (RLS scopes the read
+  // to the same JWT), so start both at once and redirect after.
+  const [user, { data: invite }] = await Promise.all([
+    getSessionUser(supabase),
+    supabase
+      .from("course_invites")
+      .select("id, course_id, courses(name)")
+      .eq("id", id)
+      .returns<InviteRow[]>()
+      .single(),
+  ]);
   if (!user) redirect(`/login?redirectTo=/join/${id}`);
-
-  const { data: invite } = await supabase
-    .from("course_invites")
-    .select("id, course_id")
-    .eq("id", id)
-    .single();
 
   if (!invite) notFound();
 
-  const { data: course } = await supabase
-    .from("courses")
-    .select("name")
-    .eq("id", invite.course_id)
-    .maybeSingle();
+  // Embedded via the course_id FK: same RLS as a separate courses query,
+  // one round trip instead of two.
+  const course = Array.isArray(invite.courses) ? invite.courses[0] : invite.courses;
 
   return (
     <>

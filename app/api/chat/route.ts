@@ -5,6 +5,13 @@ import { embedQuery } from "@/lib/ai/embeddings";
 
 export const maxDuration = 60;
 
+/**
+ * How many trailing UI messages (user + assistant) are sent to the model.
+ * Older turns cost prompt tokens and time-to-first-token without helping:
+ * each answer is grounded in freshly retrieved excerpts anyway.
+ */
+const MAX_HISTORY_MESSAGES = 12;
+
 interface MatchedChunk {
   id: string;
   document_id: string;
@@ -31,10 +38,11 @@ export async function POST(request: Request) {
   }: { messages: UIMessage[]; courseId: string; tutorMode?: boolean } = await request.json();
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return new Response("Not authenticated", { status: 401 });
+  // getClaims verifies the JWT locally (cached JWKS) instead of a round trip
+  // to Supabase Auth; still a verified identity, and RLS enforces the rest.
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+  if (claimsError || !userId) return new Response("Not authenticated", { status: 401 });
 
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
   const queryText = lastUserMessage?.parts
@@ -47,39 +55,70 @@ export async function POST(request: Request) {
       queryText.trim(),
     );
 
+  // Persist the user's turn without blocking the stream. onFinish awaits it
+  // so the assistant row is always written after the user row.
+  const userInsert: Promise<void> = queryText.trim()
+    ? Promise.resolve(
+        supabase.from("chat_messages").insert({
+          course_id: courseId,
+          user_id: userId,
+          role: "user",
+          content: queryText,
+          metadata: {},
+        }),
+      ).then(
+        ({ error }) => {
+          if (error) console.error("[chat] failed to save user message:", error.message);
+        },
+        (err: unknown) => console.error("[chat] failed to save user message:", err),
+      )
+    : Promise.resolve();
+
+  // Retrieval and message conversion are independent; run them together.
+  const retrieval: Promise<MatchedChunk[] | null> =
+    queryText.trim() && !isGreeting
+      ? embedQuery(queryText)
+          .then((queryEmbedding) =>
+            supabase.rpc("match_document_chunks", {
+              query_embedding: queryEmbedding,
+              match_course_id: courseId,
+              match_count: 8,
+            }),
+          )
+          .then(({ data, error }) => {
+            if (error) console.error("[chat] retrieval failed:", error.message);
+            return (data as MatchedChunk[] | null) ?? null;
+          })
+      : Promise.resolve(null);
+
+  const [matches, modelMessages] = await Promise.all([
+    retrieval,
+    convertToModelMessages(messages.slice(-MAX_HISTORY_MESSAGES)),
+  ]);
+
   let contextBlock = "No relevant material was found for this question.";
   let sources: ChatSource[] = [];
 
-  if (queryText.trim() && !isGreeting) {
-    const queryEmbedding = await embedQuery(queryText);
-    const { data } = await supabase.rpc("match_document_chunks", {
-      query_embedding: queryEmbedding,
-      match_course_id: courseId,
-      match_count: 8,
-    });
-    const matches = data as MatchedChunk[] | null;
+  if (matches && matches.length > 0) {
+    sources = matches.map((m, i) => ({
+      index: i + 1,
+      documentId: m.document_id,
+      documentTitle: m.document_title,
+      pageRef: m.page_ref,
+      timestampRef: m.timestamp_ref,
+    }));
 
-    if (matches && matches.length > 0) {
-      sources = matches.map((m, i) => ({
-        index: i + 1,
-        documentId: m.document_id,
-        documentTitle: m.document_title,
-        pageRef: m.page_ref,
-        timestampRef: m.timestamp_ref,
-      }));
-
-      contextBlock = matches
-        .map((m, i) => {
-          const loc = m.page_ref
-            ? `p. ${m.page_ref}`
-            : m.timestamp_ref
-              ? `${Math.floor(m.timestamp_ref / 60)}:${String(Math.floor(m.timestamp_ref % 60)).padStart(2, "0")}`
-              : null;
-          const citation = loc ? `${m.document_title}, ${loc}` : m.document_title;
-          return `[${i + 1}] (${citation})\n${m.content}`;
-        })
-        .join("\n\n");
-    }
+    contextBlock = matches
+      .map((m, i) => {
+        const loc = m.page_ref
+          ? `p. ${m.page_ref}`
+          : m.timestamp_ref
+            ? `${Math.floor(m.timestamp_ref / 60)}:${String(Math.floor(m.timestamp_ref % 60)).padStart(2, "0")}`
+            : null;
+        const citation = loc ? `${m.document_title}, ${loc}` : m.document_title;
+        return `[${i + 1}] (${citation})\n${m.content}`;
+      })
+      .join("\n\n");
   }
 
   // The chat bubble renders through SimpleMarkdown/MathTex (KaTeX), which
@@ -114,21 +153,12 @@ ${mathRule}
 Course material excerpts:
 ${contextBlock}`;
 
-  if (queryText.trim()) {
-    await supabase.from("chat_messages").insert({
-      course_id: courseId,
-      user_id: user.id,
-      role: "user",
-      content: queryText,
-      metadata: {},
-    });
-  }
-
   const result = streamText({
     model: groq("openai/gpt-oss-120b"),
     system,
-    messages: await convertToModelMessages(messages),
+    messages: modelMessages,
     onFinish: async ({ text }) => {
+      await userInsert;
       if (text) {
         // Only save citations that were actually referenced in the response text
         const citedNumbers = new Set(
@@ -136,13 +166,14 @@ ${contextBlock}`;
         );
         const usedSources = sources.filter((s) => citedNumbers.has(s.index));
 
-        await supabase.from("chat_messages").insert({
+        const { error } = await supabase.from("chat_messages").insert({
           course_id: courseId,
-          user_id: user.id,
+          user_id: userId,
           role: "assistant",
           content: text,
           metadata: { sources: usedSources },
         });
+        if (error) console.error("[chat] failed to save assistant message:", error.message);
       }
     },
   });
